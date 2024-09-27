@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
@@ -9,7 +10,8 @@ typedef std::string String;
 typedef struct Process
 {
 	String process_name;
-	std::tm *time_created;
+	//std::tm *time_created;
+	String time_created;
 }
 
 Process;
@@ -32,8 +34,9 @@ void displayProcess(Process process)
 	std::cout << "Process name: " + process.process_name + "\n";
 	std::cout << "Current line of instruction: 500\n";
 	std::cout << "Total line of instruction: 1000\n";
-	std::tm* temp_time = process.time_created;
-	std::cout << "Time created: " << (temp_time->tm_year + 1900) << "-" << (temp_time->tm_mon + 1) << "-" << (temp_time->tm_mday) << " " << (temp_time->tm_hour) << ":" << (temp_time->tm_min) << ":" << (temp_time->tm_sec) << "\n"; 
+	//std::tm *temp_time = process.time_created;
+	//std::cout << "Time created: " << (temp_time->tm_year + 1900) << "-" << (temp_time->tm_mon + 1) << "-" << (temp_time->tm_mday) << " " << (temp_time->tm_hour) << ":" << (temp_time->tm_min) << ":" << (temp_time->tm_sec) << "\n"; 
+	std::cout << "Time created: " << process.time_created << "\n";
 	
 	bool processRunning = true;
 	String processCommand;
@@ -78,8 +81,14 @@ main()
 				Process temp_process;
 				temp_process.process_name = command.substr(10, command.size() - 1);
 				
-				std::time_t t = std::time(0);
-				temp_process.time_created = std::localtime(&t);
+				time_t rawtime;
+				struct tm * timeinfo;
+				char time_buffer[80];
+				time (&rawtime);
+				timeinfo = localtime(&rawtime);
+				strftime(time_buffer, sizeof(time_buffer),"%d-%m-%Y %H:%M:%S", timeinfo);
+				std::string time_string(time_buffer);
+				temp_process.time_created = time_string;
 				
 				bool nameAlreadyExists = false;
 				for(unsigned int i = 0; i < process_vector.size(); i++)
