@@ -34,8 +34,6 @@ void displayProcess(Process process)
 	std::cout << "Process name: " + process.process_name + "\n";
 	std::cout << "Current line of instruction: 500\n";
 	std::cout << "Total line of instruction: 1000\n";
-	//std::tm *temp_time = process.time_created;
-	//std::cout << "Time created: " << (temp_time->tm_year + 1900) << "-" << (temp_time->tm_mon + 1) << "-" << (temp_time->tm_mday) << " " << (temp_time->tm_hour) << ":" << (temp_time->tm_min) << ":" << (temp_time->tm_sec) << "\n"; 
 	std::cout << "Time created: " << process.time_created << "\n";
 	
 	bool processRunning = true;
@@ -53,6 +51,77 @@ void displayProcess(Process process)
 			std::cout << processCommand + " not recognized.\n";
 	}
 	
+	system("cls");
+	printMenu();
+	return;
+}
+
+String formatProcessName(String processName)
+{
+	String stringBuffer;
+	if(processName.size() < 44)
+	{
+		stringBuffer = processName;
+		for(unsigned int i = 0; i < 45 - processName.size(); i++)
+			stringBuffer.append(" ");
+	}
+	else
+	{
+		stringBuffer = "...";
+		stringBuffer.append(processName.substr(processName.size() - 41, 41));
+		stringBuffer.append(" ");
+	}
+	return stringBuffer;
+}
+
+void displaySMI(std::vector<Process> process_vector)
+{
+	system("cls");
+	time_t timestamp;
+	time(&timestamp);
+	bool isRunning = true;
+	String command;
+	
+	while(isRunning)
+	{
+		std::cout << ctime(&timestamp);
+        std::cout << "+---------------------------------------------------------------------------------------------+\n";
+        std::cout << "| NVIDIA-SMI 551.86                    Driver Version: 551.86            CUDA VERSION: 12.4   |\n";
+        std::cout << "|--------------------------------------------+-------------------------+----------------------|\n";
+        std::cout << "| GPU NAME                         TCC/WDDM  | Bus-Id             DISP | Volatile Uncorr. ECC |\n";
+        std::cout << "| Fan Temp PERF                 Pwr:Usage/Cap|            Memory-Usage | GPU UTIL Compute M.  |\n";
+        std::cout << "|                                            |                         |              Mig M.  |\n";
+        std::cout << "|============================================+=========================+======================|\n";
+        std::cout << "|   0   NVIDIA Geforce GTX 1080         WDDM |      00000000:26:00.0 ON|                 N/A  |\n";
+        std::cout << "| 28%      37C   P8               11W/  180W |        701MiB /  8192Mib|        0%     Default|\n";
+        std::cout << "|                                            |                         |                 N/A  |\n";
+        std::cout << "+---------------------------------------------------------------------------------------------+\n\n";
+
+        std::cout << "+---------------------------------------------------------------------------------------------+\n";
+        std::cout << "| Processes                                                                                   |\n";
+        std::cout << "|  GPU   GI    CI       PID    TYPE    Process name                            GPU MEMORY     |\n";
+        std::cout << "|        ID    ID                                                                 USAGE       |\n";
+        std::cout << "|=============================================================================================|\n";
+        
+		std::cout << "|    0   N/A   N/A     " << "9999" << "     " << "C+G" << "    " << formatProcessName("C:\\Windows\\System32\\dwn.exe") << "N/A" << "       |\n";
+		std::cout << "|    0   N/A   N/A     " << "9999" << "     " << "C+G" << "    " << formatProcessName("weky238fbsdoasdi381912asd8fasdu34\\XboxGameBarWidgets.exe") << "N/A" << "       |\n";
+		std::cout << "|    0   N/A   N/A     " << "9999" << "     " << "C+G" << "    " << formatProcessName("C:\\Program Files (x86)\\Java\\jdk-1.8\\jre\\bin\\dtplugin.exe") << "N/A" << "       |\n";
+		std::cout << "|    0   N/A   N/A     " << "9999" << "     " << "C+G" << "    " << formatProcessName("C:\\noita\\mame\\castool.exe") << "N/A" << "       |\n";
+		std::cout << "|    0   N/A   N/A     " << "9999" << "     " << "C+G" << "    " << formatProcessName("C:\\Program Files (x86)\\SASM\\MinGW\\bin\\gcc.exe") << "N/A" << "       |\n";
+
+		std::cout << "|=============================================================================================|\n";
+		
+		std::cout << "Enter a command: ";
+		getline(std::cin, command);
+		
+		if(!command.compare("exit"))
+		{
+			std::cout << command + " recognized. Exiting smi.\n";
+			isRunning = false;
+		}
+		else
+			std::cout << command + " not recognized.\n";
+	}
 	system("cls");
 	printMenu();
 	return;
@@ -139,7 +208,8 @@ main()
 			system("cls");
 			printMenu();
 		}
-
+		else if (!command.compare("smi"))
+			displaySMI(process_vector);
 		else if (!command.compare("exit"))
 		{
 			std::cout << command + " recognized. Exiting OS.\n";
