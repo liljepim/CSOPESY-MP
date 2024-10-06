@@ -127,7 +127,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AConsole.cpp" />
+    <ClCompile Include="BaseConsole.cpp" />
+    <ClCompile Include="ConsoleManager.cpp" />
     <ClCompile Include="CSOPESY.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AConsole.h" />
+    <ClInclude Include="BaseConsole.h" />
+    <ClInclude Include="ConsoleManager.h" />
+    <ClInclude Include="Typedef.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
