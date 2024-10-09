@@ -11,3 +11,8 @@ Process::Process(String processName)
 	this->totalLine = 1000;
 	
 }
+
+Process::~Process()
+{
+	this->totalCount--;
+}

@@ -8,6 +8,7 @@ BaseConsole::BaseConsole(String processName) : AConsole(processName)
 	this->attachedProcess = std::make_shared<Process>(processName);
 }
 
+
 void BaseConsole::onEnabled()
 {
 	this->refreshed = true;
