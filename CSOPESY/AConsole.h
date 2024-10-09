@@ -1,6 +1,8 @@
+#pragma once
 #include <iostream>
+#include <string>
 #include "Typedef.h"
-
+#include "Process.h"
 class AConsole
 {
 public:
@@ -8,10 +10,10 @@ public:
 	~AConsole() = default;
 
 	String getName();
-	virtual void onEnabled() = 0;
-	virtual void display() = 0;
-	virtual void process() = 0;
+	virtual void onEnabled() = 0;	// Only called when screen is shown the first time
+	virtual void display() = 0;		// Display is called per frame?
+	virtual void process() = 0;		// Process: any processing commands or algorithms
 
 	String name;
-	friend class ConsoleManager;
+	friend class ConsoleManager;	// Friend: Allows ConsoleManager to access all members of AConsole
 };

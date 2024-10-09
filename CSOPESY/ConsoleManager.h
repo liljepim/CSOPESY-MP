@@ -10,6 +10,7 @@
 #include "Typedef.h"
 #include "AConsole.h"
 #include "BaseConsole.h"
+#include "MainConsole.h"
 
 const String MAIN_CONSOLE = "MAIN_CONSOLE";
 
@@ -26,13 +27,13 @@ public:
 	void process() const;
 	void switchConsole(String consoleName);
 
-	void registerScreen(std::shared_ptr<BaseConsole> consoleRef);
-	void switchToScreen(String screenName);
-	void unregisterScreen(String screenName);
+	bool registerScreen(std::shared_ptr<BaseConsole> consoleRef);
+	bool switchToScreen(String screenName);
+	/*void unregisterScreen(String screenName);*/
 
 	void returnToPreviousConsole();
 	void exitApplication();
-	void isRunning() const;
+	bool isRunning() const;
 	
 	HANDLE getConsoleHandle() const;
 
