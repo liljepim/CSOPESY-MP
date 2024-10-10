@@ -35,46 +35,68 @@ void MainConsole::process()
 		String command = "";
 		std::cout << "Enter Command: ";
 		std::getline(std::cin, command);
-		if (command == "exit")
+		if(osInitialized)
 		{
-			ConsoleManager::getInstance()->exitApplication();
-			return;
-		}
-		else if (command == "clear")
-		{
-			system("cls");
-			printBanner();
-		}
-		else if (command.starts_with("screen -s "))
-		{
-			String tempName = "";
-			if(command.length() > 9)
+			if (command == "clear")
 			{
-				tempName.append(command,10, command.length()-9);
+				system("cls");
+				printBanner();
 			}
-			std::cout << "Creating process " << tempName << "..." << std::endl;
-			std::shared_ptr<BaseConsole> tempConsole = std::make_shared<BaseConsole>(tempName);
-			bool success = ConsoleManager::getInstance()->registerScreen(tempConsole);
-			if(success)
-				ConsoleManager::getInstance()->switchToScreen(tempName);
-				this->refreshed = false;
-		}
-		else if (command.starts_with("screen -r "))
-		{
-			String tempName = "";
-			if (command.length() > 9)
+			else if (command.starts_with("screen -s "))
 			{
-				tempName.append(command, 10, command.length() - 9);
-			}
-			
-			bool success = ConsoleManager::getInstance()->switchToScreen(tempName);
-			if (success)
+				String tempName = "";
+				if (command.length() > 9)
+				{
+					tempName.append(command, 10, command.length() - 9);
+				}
+				std::cout << "Creating process " << tempName << "..." << std::endl;
+				std::shared_ptr<BaseConsole> tempConsole = std::make_shared<BaseConsole>(tempName);
+				bool success = ConsoleManager::getInstance()->registerScreen(tempConsole);
+				if (success)
+					ConsoleManager::getInstance()->switchToScreen(tempName);
 				this->refreshed = false;
+			}
+			else if (command.starts_with("screen -r "))
+			{
+				String tempName = "";
+				if (command.length() > 9)
+				{
+					tempName.append(command, 10, command.length() - 9);
+				}
+
+				bool success = ConsoleManager::getInstance()->switchToScreen(tempName);
+				if (success)
+					this->refreshed = false;
+			}
+			else if (command == "exit")
+			{
+				ConsoleManager::getInstance()->exitApplication();
+				return;
+			}
+			else
+			{
+				std::cout << "Command not recognized. Try again.\n";
+			}
 		}
-		else
+		else if (!osInitialized)
 		{
-			std::cout << "Command not recognized. Try again.\n";
+			if(command == "initialize")
+			{
+				osInitialized = true;
+				std::cout << "OS Initialized.\n";
+				
+			}
+			else if (command == "exit")
+			{
+				ConsoleManager::getInstance()->exitApplication();
+				return;
+			}
+			else
+			{
+				std::cout << "Command not recognized. Try again.\n";
+			}
 		}
+		
 	}
 }
 
