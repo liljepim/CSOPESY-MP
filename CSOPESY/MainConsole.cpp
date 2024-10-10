@@ -2,6 +2,7 @@
 
 #include <string>
 
+extern bool osInitialized;
 
 void MainConsole::printBanner() const
 {

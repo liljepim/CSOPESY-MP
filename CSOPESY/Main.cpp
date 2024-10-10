@@ -1,20 +1,19 @@
 #include <iostream>
 #include "ConsoleManager.h"
 #include <stdlib.h>
+#include <thread>
+#include <chrono>
+#include <ctime>
 
 typedef std::string String;
 
-void printMenu() {
-	std::cout << "    {__     {__ __      {____     {_______  {________  {__ __  {__      {__\n";
-	std::cout << " {__   {__{__    {__  {__    {__  {__    {__{__      {__    {__ {__    {__ \n";
-	std::cout << "{__        {__      {__        {__{__    {__{__       {__        {__ {__   \n";
-	std::cout << "{__          {__    {__        {__{_______  {______     {__        {__     \n";
-	std::cout << "{__             {__ {__        {__{__       {__            {__     {__     \n";
-	std::cout << " {__   {__{__    {__  {__     {__ {__       {__      {__    {__    {__     \n";
-	std::cout << "   {____    {__ __      {____     {__       {________  {__ __      {__     \n";
-	std::cout << "Hello, welcome to the CSOPESY command line!\n";
-	std::cout << "Type 'exit' to quit, 'clear' to clear the screen\n";
+bool osInitialized = false;
 
+
+void tester()
+{
+	Sleep(5000);
+	std::cout << "Hello 2\n";
 }
 
 int
@@ -32,5 +31,9 @@ main()
 		running = ConsoleManager::getInstance()->isRunning();
 	}
 	
-	return 0;
 }
+
+//Time printing
+//std::chrono::time_point now = std::chrono::system_clock::now();
+//
+//std::cout << std::format("{:%m/%d/%y %X}", now);

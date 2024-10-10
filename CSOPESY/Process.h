@@ -1,5 +1,6 @@
 #pragma once
 #include "Typedef.h"
+
 class Process
 {
 public:
@@ -9,8 +10,9 @@ public:
 	int currentLine;
 	int totalLine;
 	int processId;
+	time_t timeCreated;
+	time_t timeFinished;
 private:
-	
 	static int totalCount;
 };
 

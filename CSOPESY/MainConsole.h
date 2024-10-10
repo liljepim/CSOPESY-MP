@@ -12,5 +12,6 @@ public:
 	void printBanner() const;
 private:
 	bool refreshed = false;
+	bool initialized = true;
 };
 
