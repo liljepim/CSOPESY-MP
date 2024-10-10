@@ -21,4 +21,9 @@ private:
 		{"delay-per-exec", 0}
 	};
 	String scheduler;
+	//next 4 lines pasted as is; code not tested yet
+	ConsoleManager();
+	~ConsoleManager() = default;
+	ConsoleManager(ConsoleManager const&) {};
+	ConsoleManager& operator=(ConsoleManager const&) {};
 }
