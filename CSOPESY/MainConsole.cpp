@@ -84,6 +84,7 @@ void MainConsole::process()
 		{
 			if(command == "initialize")
 			{
+				Scheduler::getInstance()->readConfig();
 				osInitialized = true;
 				std::cout << "OS Initialized.\n";
 				Scheduler::getInstance()->readConfig();
