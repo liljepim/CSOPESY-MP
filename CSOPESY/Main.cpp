@@ -23,8 +23,6 @@ main()
 	ConsoleManager::initialize();
 	Scheduler::initialize();
 
-	Scheduler::getInstance()->varTest();
-
 	bool running = true;
 
 	while(running)
