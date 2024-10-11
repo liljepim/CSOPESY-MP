@@ -24,7 +24,7 @@ private:
 	String scheduler;
 	std::vector<Process> processList;
 	std::vector<std::shared_ptr<Process>> readyQueue;
-	int coreList[4] = {-1, -1, -1, -1};
+	std::vector<int> coreList;
 	Scheduler();
 	~Scheduler() = default;
 	Scheduler(Scheduler const&) {};

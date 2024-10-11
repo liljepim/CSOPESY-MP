@@ -8,7 +8,7 @@ Process::Process(String processName)
 	this->processId = Process::totalCount;
 	this->totalCount++;
 	this->currentLine = 0;
-	this->totalLine = 100;
+	this->totalLine = 1000;
 
 	
 }

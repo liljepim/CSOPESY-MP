@@ -35,6 +35,8 @@ void Scheduler::readConfig()
 		else
 			this->scheduler = varValue;
 	}
+	for(int i = 0; i < this->configVars["num-cpu"]; i++)
+		this->coreList.push_back(-1);
 	std::thread assignThread(&Scheduler::assignProcesses, sharedInstance);
 	assignThread.detach();
 }
@@ -42,8 +44,8 @@ void Scheduler::readConfig()
 void Scheduler::registerProcess(std::shared_ptr<Process> newProcess)
 {
 	this->readyQueue.push_back(newProcess);
-	for(int i = 0; i < this->readyQueue.size(); i++)
-		std::cout << this->readyQueue[i]->processId << std::endl;
+	/*for(int i = 0; i < this->readyQueue.size(); i++)
+		std::cout << this->readyQueue[i]->processId << std::endl;*/
 }
 
 void Scheduler::assignProcesses()
@@ -51,17 +53,17 @@ void Scheduler::assignProcesses()
 	//std::cout << "assigned" << std::endl;
 	std::vector<std::thread> cpuCores;
 	
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < this->configVars["num-cpu"]; i++)
 		cpuCores.push_back(std::thread());
 	
 	while(true)
 	{
-		for(int i = 0; i < 4; i++)
+		for(int i = 0; i < this->configVars["num-cpu"]; i++)
 		{
 			if(this->coreList[i] == -1 && !readyQueue.empty())
 			{
-				cpuCores[i] = std::thread(&Scheduler::runProcesses, sharedInstance, this->readyQueue.front(), i);
 				this->coreList[i] = this->readyQueue.front()->processId;
+				cpuCores[i] = std::thread(&Scheduler::runProcesses, sharedInstance, this->readyQueue.front(), i);
 				this->readyQueue.erase(this->readyQueue.begin());
 				cpuCores[i].detach();
 			}
@@ -74,7 +76,7 @@ void Scheduler::runProcesses(std::shared_ptr<Process> runningProcess, int coreIn
 	for(int i = runningProcess->currentLine; i < runningProcess->totalLine; i++)
 	{
 		runningProcess->currentLine += 1;
-		Sleep(100);
+		Sleep(1000);
 	}
 	//std::cout << "running" << std::endl;
 	this->coreList[coreIndex] = -1;

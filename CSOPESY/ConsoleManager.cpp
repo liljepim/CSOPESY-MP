@@ -83,7 +83,7 @@ bool ConsoleManager::switchToScreen(String consoleName)
 	if(this->consoleTable.contains(consoleName))
 	{
 		//Clear Screen
-		//system("cls");
+		system("cls");
 		this->previousConsole = this->currentConsole;
 		this->currentConsole = consoleTable[consoleName];
 		this->currentConsole->onEnabled();
