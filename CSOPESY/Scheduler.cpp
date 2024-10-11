@@ -24,7 +24,7 @@ void Scheduler::initialize()
 		varName = line.substr(0, spacePos);
 		varValue = line.substr(spacePos + 1, line.size());
 		if(varName.compare("scheduler") != 0)
-			configVars[varName] = std::stoi(varValue);
+			configVars.insert({varName, std::stoi(varValue)});
 		else
 			scheduler = varValue;
 	}

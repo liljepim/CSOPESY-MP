@@ -17,11 +17,9 @@ private:
 	static Scheduler* sharedInstance;
 	static std::map<String, int> configVars;
 	static String scheduler;
-	//next 4 lines pasted as is; code not tested yet
-	/*
-	ConsoleManager();
-	~ConsoleManager() = default;
-	ConsoleManager(ConsoleManager const&) {};
-	ConsoleManager& operator=(ConsoleManager const&) {};
-	*/
+	Scheduler();
+	~Scheduler() = default;
+	Scheduler(Scheduler const&) {};
+	Scheduler& operator=(Scheduler const&) {};
+	
 };
