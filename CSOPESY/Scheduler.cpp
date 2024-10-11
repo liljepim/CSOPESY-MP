@@ -34,3 +34,9 @@ void Scheduler::destroy()
 {
 	delete sharedInstance;
 }
+
+void Scheduler::varTest()
+{
+	for (auto it = configVars.begin(); it != configVars.end(); it++) 
+        std::cout << "Key: " << it->first << ", Value: " << it->second << std::endl;
+}

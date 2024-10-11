@@ -1,5 +1,6 @@
 #include <iostream>
 #include "ConsoleManager.h"
+#include "Scheduler.h"
 #include <stdlib.h>
 #include <thread>
 #include <chrono>
@@ -20,6 +21,9 @@ int
 main()
 {
 	ConsoleManager::initialize();
+	Scheduler::initialize();
+
+	Scheduler::getInstance()->varTest();
 
 	bool running = true;
 
