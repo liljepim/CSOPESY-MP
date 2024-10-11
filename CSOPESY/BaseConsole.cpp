@@ -14,6 +14,11 @@ void BaseConsole::onEnabled()
 	this->refreshed = true;
 }
 
+std::shared_ptr<Process> BaseConsole::getAttachedProcess()
+{
+	return this->attachedProcess;
+}
+
 void BaseConsole::process()
 {
 	if(!(this->refreshed))

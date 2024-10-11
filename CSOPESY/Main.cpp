@@ -33,6 +33,8 @@ main()
 		running = ConsoleManager::getInstance()->isRunning();
 	}
 	
+	ConsoleManager::destroy();
+	Scheduler::destroy();
 }
 
 //Time printing

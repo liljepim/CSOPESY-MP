@@ -12,6 +12,7 @@ public:
 	int processId;
 	time_t timeCreated;
 	time_t timeFinished;
+	void processBody();
 private:
 	static int totalCount;
 };

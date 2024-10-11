@@ -1,4 +1,5 @@
 #include "MainConsole.h"
+#include "Scheduler.h"
 
 #include <string>
 
@@ -55,6 +56,7 @@ void MainConsole::process()
 				if (success)
 					ConsoleManager::getInstance()->switchToScreen(tempName);
 				this->refreshed = false;
+				Scheduler::getInstance()->registerProcess((tempConsole->getAttachedProcess()));
 			}
 			else if (command.starts_with("screen -r "))
 			{
@@ -84,7 +86,7 @@ void MainConsole::process()
 			{
 				osInitialized = true;
 				std::cout << "OS Initialized.\n";
-				
+				Scheduler::getInstance()->readConfig();
 			}
 			else if (command == "exit")
 			{

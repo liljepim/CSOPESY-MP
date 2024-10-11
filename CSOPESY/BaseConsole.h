@@ -9,6 +9,7 @@ public:
 	void onEnabled() override;
 	void process() override;
 	void display() override;
+	std::shared_ptr<Process> getAttachedProcess();
 private:
 	void printProcessInfo() const;
 	bool refreshed = false;
