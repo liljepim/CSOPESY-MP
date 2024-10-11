@@ -8,8 +8,13 @@ Process::Process(String processName)
 	this->processId = Process::totalCount;
 	this->totalCount++;
 	this->currentLine = 0;
-	this->totalLine = 1000;
+	this->totalLine = 100;
 	
+}
+
+String Process::getTime()
+{
+		
 }
 
 Process::~Process()

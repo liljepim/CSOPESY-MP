@@ -1,5 +1,5 @@
 #include "MainConsole.h"
-
+#include "Scheduler.h"
 #include <string>
 
 extern bool osInitialized;
@@ -82,6 +82,7 @@ void MainConsole::process()
 		{
 			if(command == "initialize")
 			{
+				Scheduler::getInstance()->readConfig();
 				osInitialized = true;
 				std::cout << "OS Initialized.\n";
 				

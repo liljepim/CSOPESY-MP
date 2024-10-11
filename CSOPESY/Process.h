@@ -10,8 +10,10 @@ public:
 	int currentLine;
 	int totalLine;
 	int processId;
-	time_t timeCreated;
-	time_t timeFinished;
+	time_t timeQueued = 0;
+	time_t timeFinished= 0;
+
+	String getTime();
 private:
 	static int totalCount;
 };
