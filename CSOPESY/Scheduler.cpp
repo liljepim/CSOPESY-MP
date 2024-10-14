@@ -5,6 +5,9 @@
 #include <thread>
 #include <windows.h>
 #include <functional>
+#include <ctime>
+
+extern unsigned int cpuCycle;
 
 Scheduler* Scheduler::sharedInstance = nullptr;
 
@@ -67,18 +70,27 @@ void Scheduler::assignProcesses()
 				this->readyQueue.erase(this->readyQueue.begin());
 				cpuCores[i].detach();
 			}
-		}
+		} 
 	}
 }
 
 void Scheduler::runProcesses(std::shared_ptr<Process> runningProcess, int coreIndex)
 {
-	for(int i = runningProcess->currentLine; i < runningProcess->totalLine; i++)
+	unsigned int previousCycle = cpuCycle;
+	for(int i = runningProcess->currentLine; i < runningProcess->totalLine;)
 	{
-		runningProcess->currentLine += 1;
-		Sleep(1000);
+		if(cpuCycle-previousCycle == configVars["delay-per-exec"])
+		{
+			previousCycle = cpuCycle;
+			runningProcess->coreUsed = coreIndex;
+			runningProcess->currentLine += 1;
+			runningProcess->lastExecuted = time(NULL);
+			Sleep(this->configVars["delay-per-exec"]);
+			i++;
+		}
+		
 	}
-	//std::cout << "running" << std::endl;
+	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
 }
 

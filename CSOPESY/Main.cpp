@@ -9,12 +9,20 @@
 typedef std::string String;
 
 bool osInitialized = false;
+unsigned int cpuCycle = 0;
 
 
-void tester()
+void incrementCycle()
 {
-	Sleep(5000);
-	std::cout << "Hello 2\n";
+	while(ConsoleManager::getInstance()->isRunning())
+	{
+		if (osInitialized)
+		{
+			cpuCycle++;
+			Sleep(10);
+		}
+	}
+	
 }
 
 int
@@ -22,7 +30,8 @@ main()
 {
 	ConsoleManager::initialize();
 	Scheduler::initialize();
-
+	std::thread cpuCycler(incrementCycle);
+	cpuCycler.detach();
 	bool running = true;
 
 	while(running)

@@ -11,8 +11,10 @@ public:
 	int totalLine;
 	int processId;
 	time_t timeCreated;
+	time_t lastExecuted;
 	time_t timeFinished;
 	void processBody();
+	int coreUsed;
 private:
 	static int totalCount;
 };

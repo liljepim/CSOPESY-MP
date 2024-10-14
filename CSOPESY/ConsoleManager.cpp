@@ -18,6 +18,12 @@ void ConsoleManager::destroy()
 	delete sharedInstance;
 }
 
+ConsoleManager::ConsoleTable* ConsoleManager::getConsoleTable()
+{
+	return &this->consoleTable;
+}
+
+
 void ConsoleManager::drawConsole() const
 {
 	if (this->currentConsole != nullptr)

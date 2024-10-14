@@ -45,9 +45,16 @@ void BaseConsole::printProcessInfo() const
 {
 	std::cout << "Process Name: " << this->name << std::endl;
 	std::cout << "PID: " << this->attachedProcess->processId<< std::endl;
-	std::cout << "Current Instruction Line: " << this->attachedProcess->currentLine << std::endl;
-	std::cout << "Lines of Code: " << this->attachedProcess->totalLine << std::endl;
 
+	if (this->attachedProcess->currentLine == this->attachedProcess->totalLine)
+	{
+		std::cout << "Finished!" << std::endl;
+	}
+	else
+	{
+		std::cout << "Current Instruction Line: " << this->attachedProcess->currentLine << std::endl;
+		std::cout << "Lines of Code: " << this->attachedProcess->totalLine << std::endl;
+	}
 }
 
 

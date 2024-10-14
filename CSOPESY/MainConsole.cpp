@@ -1,10 +1,10 @@
 #include "MainConsole.h"
 #include "Scheduler.h"
-
+#include <format>
 #include <string>
-
+#include <chrono>
 extern bool osInitialized;
-
+extern unsigned int cpuCycle;
 void MainConsole::printBanner() const
 {
 	std::cout << "    {__     {__ __      {____     {_______  {________  {__ __  {__      {__\n";
@@ -26,6 +26,37 @@ void MainConsole::display()
 		ConsoleManager::getInstance()->setCursorPosition(0, 0);
 		printBanner();
 		this->refreshed = false;
+	}
+}
+
+void MainConsole::processList()
+{
+	std::cout << "\nRunning processes:" << std::endl;
+	int runningCount = 0;
+	for(auto i = ConsoleManager::getInstance()->getConsoleTable()->begin(); i != ConsoleManager::getInstance()->getConsoleTable()->end(); i++)
+	{
+		std::shared_ptr<BaseConsole> tempHolder = std::dynamic_pointer_cast<BaseConsole>(i->second);
+		if(i->first != "MAIN_CONSOLE" && tempHolder->getAttachedProcess()->currentLine != tempHolder->getAttachedProcess()->totalLine && tempHolder->getAttachedProcess()->coreUsed != -1)
+		{
+			std::cout << tempHolder->getName() << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempHolder->getAttachedProcess()->lastExecuted))) << "\tCore:" << tempHolder->getAttachedProcess()->coreUsed << "\t" << tempHolder->getAttachedProcess()->currentLine << "/" << tempHolder->getAttachedProcess()->totalLine << std::endl;
+			runningCount++;
+		}
+		
+	}
+	if(runningCount == 0 )
+	{
+		std::cout << "No running processes." << std::endl;
+	}
+
+	std::cout << "\nFinished processes:" << std::endl;
+	for (auto i = ConsoleManager::getInstance()->getConsoleTable()->begin(); i != ConsoleManager::getInstance()->getConsoleTable()->end(); i++)
+	{
+		std::shared_ptr<BaseConsole> tempHolder = std::dynamic_pointer_cast<BaseConsole>(i->second);
+		if (i->first != "MAIN_CONSOLE" && tempHolder->getAttachedProcess()->currentLine == tempHolder->getAttachedProcess()->totalLine)
+		{
+			std::cout << tempHolder->getName() << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempHolder->getAttachedProcess()->lastExecuted))) << "\tFinished\t" <<  tempHolder->getAttachedProcess()->currentLine << "/" << tempHolder->getAttachedProcess()->totalLine << std::endl;
+		}
+
 	}
 }
 
@@ -70,6 +101,19 @@ void MainConsole::process()
 				if (success)
 					this->refreshed = false;
 			}
+			else if (command == "screen -ls")
+			{
+
+				processList();
+			}
+			else if (command == "scheduler-test")
+			{
+				
+			}
+			else if (command == "show-cycle")
+			{
+				std::cout << cpuCycle << std::endl;
+			}
 			else if (command == "exit")
 			{
 				ConsoleManager::getInstance()->exitApplication();
@@ -92,6 +136,10 @@ void MainConsole::process()
 			{
 				ConsoleManager::getInstance()->exitApplication();
 				return;
+			}
+			else if (command == "show-cycle")
+			{
+				std::cout << cpuCycle << std::endl;
 			}
 			else
 			{

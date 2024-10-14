@@ -37,6 +37,8 @@ public:
 	
 	HANDLE getConsoleHandle() const;
 
+	ConsoleTable* getConsoleTable();
+
 	void setCursorPosition(int posX, int posY) const;
 private:
 	ConsoleManager();
