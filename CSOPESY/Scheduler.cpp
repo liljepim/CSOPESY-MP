@@ -68,7 +68,7 @@ void Scheduler::assignProcesses()
 				this->coreList[i] = this->readyQueue.front()->processId;
 				cpuCores[i] = std::thread(&Scheduler::runProcesses, sharedInstance, this->readyQueue.front(), i);
 				this->readyQueue.erase(this->readyQueue.begin());
-				//cpuCores[i].detach();
+				cpuCores[i].detach();
 			}
 		} 
 	}
@@ -77,7 +77,12 @@ void Scheduler::assignProcesses()
 void Scheduler::runProcesses(std::shared_ptr<Process> runningProcess, int coreIndex)
 {
 	unsigned int previousCycle = cpuCycle;
-	for(int i = runningProcess->currentLine; i < runningProcess->totalLine;)
+	unsigned int endLine;
+	if(runningProcess->totalLine <= runningProcess->currentLine + this->configVars["quantum-cycles"])
+		endLine = runningProcess->totalLine;
+	else
+		endLine = runningProcess->currentLine + this->configVars["quantum-cycles"];
+	for(int i = runningProcess->currentLine; i < endLine;)
 	{
 		if(cpuCycle-previousCycle == configVars["delay-per-exec"])
 		{
@@ -92,6 +97,7 @@ void Scheduler::runProcesses(std::shared_ptr<Process> runningProcess, int coreIn
 	}
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
+	this->readyQueue.push_back(runningProcess);
 }
 
 void Scheduler::destroy()
