@@ -68,7 +68,7 @@ void Scheduler::assignProcesses()
 				this->coreList[i] = this->readyQueue.front()->processId;
 				cpuCores[i] = std::thread(&Scheduler::runProcesses, sharedInstance, this->readyQueue.front(), i);
 				this->readyQueue.erase(this->readyQueue.begin());
-				cpuCores[i].detach();
+				//cpuCores[i].detach();
 			}
 		} 
 	}
