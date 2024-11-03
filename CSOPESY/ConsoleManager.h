@@ -18,7 +18,6 @@ class ConsoleManager
 {
 public:
 	typedef std::unordered_map<String, std::shared_ptr<AConsole>> ConsoleTable;
-
 	static ConsoleManager* getInstance();
 	static void initialize();
 	static void destroy();
@@ -28,6 +27,7 @@ public:
 	void switchConsole(String consoleName);
 
 	bool registerScreen(std::shared_ptr<BaseConsole> consoleRef);
+	bool registerDummy(std::shared_ptr<BaseConsole> consoleRef);
 	bool switchToScreen(String screenName);
 	/*void unregisterScreen(String screenName);*/
 

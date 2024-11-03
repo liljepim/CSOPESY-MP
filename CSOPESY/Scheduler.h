@@ -17,6 +17,8 @@ public:
 	void registerProcess(std::shared_ptr<Process> newProcess);
 	void assignProcesses();
 	void runProcesses(std::shared_ptr<Process> runningProcess, int coreIndex);
+	void startTester();
+	void stopTester();
 
 private:
 	static Scheduler* sharedInstance;
@@ -29,4 +31,5 @@ private:
 	~Scheduler() = default;
 	Scheduler(Scheduler const&) {};
 	Scheduler& operator=(Scheduler const&) {};
+	void generateDummy();
 };

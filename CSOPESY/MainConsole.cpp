@@ -1,10 +1,12 @@
 #include "MainConsole.h"
-#include "Scheduler.h"
 #include <format>
 #include <string>
 #include <chrono>
+
 extern bool osInitialized;
+extern bool isTesting;
 extern unsigned int cpuCycle;
+
 void MainConsole::printBanner() const
 {
 	std::cout << "    {__     {__ __      {____     {_______  {________  {__ __  {__      {__\n";
@@ -108,7 +110,11 @@ void MainConsole::process()
 			}
 			else if (command == "scheduler-test")
 			{
-				
+				Scheduler::getInstance()->startTester();
+			}
+			else if (command == "scheduler-stop")
+			{
+				Scheduler::getInstance()->stopTester();
 			}
 			else if (command == "show-cycle")
 			{

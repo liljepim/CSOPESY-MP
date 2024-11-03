@@ -3,6 +3,8 @@
 #include "Typedef.h"
 #include "ConsoleManager.h"
 #include "BaseConsole.h"
+#include "Scheduler.h"
+
 class MainConsole : public AConsole
 {
 public:

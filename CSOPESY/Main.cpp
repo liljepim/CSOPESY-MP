@@ -9,6 +9,8 @@
 typedef std::string String;
 
 bool osInitialized = false;
+bool isTesting = false;
+
 unsigned int cpuCycle = 0;
 
 
@@ -19,7 +21,7 @@ void incrementCycle()
 		if (osInitialized)
 		{
 			cpuCycle++;
-			Sleep(10);
+			Sleep(1000);
 		}
 	}
 	

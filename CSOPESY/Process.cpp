@@ -9,7 +9,7 @@ Process::Process(String processName)
 	this->totalCount++;
 	this->currentLine = 0;
 	this->totalLine = 100;
-	
+	this->coreUsed = -1;
 }
 
 void Process::processBody(){

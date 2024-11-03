@@ -8,6 +8,8 @@
 #include <ctime>
 
 extern unsigned int cpuCycle;
+extern bool isTesting;
+unsigned int dummyCounter = 0;
 
 Scheduler* Scheduler::sharedInstance = nullptr;
 
@@ -104,6 +106,36 @@ void Scheduler::destroy()
 {
 	delete sharedInstance;
 }
+
+void Scheduler::generateDummy()
+{
+	int prevCycle = cpuCycle;
+
+	while(isTesting)
+	{
+		if(cpuCycle-prevCycle >= this->configVars["batch-process-freq"])
+		{
+			std::string tempConsoleName = "Process_" + dummyCounter;
+			std::shared_ptr<BaseConsole> tempConsole = std::make_shared<BaseConsole>(tempConsoleName);
+			ConsoleManager::getInstance()->registerDummy(tempConsole);
+			dummyCounter++;
+			prevCycle = cpuCycle;
+		}
+	}
+}
+
+void Scheduler::startTester()
+{
+	isTesting = true;
+	std::thread dummyGenerator(&Scheduler::generateDummy, sharedInstance);
+	dummyGenerator.detach();
+}
+
+void Scheduler::stopTester()
+{
+	isTesting = false;
+}
+
 
 void Scheduler::varTest()
 {
