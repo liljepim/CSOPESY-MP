@@ -52,13 +52,10 @@ void Scheduler::readConfig()
 void Scheduler::registerProcess(std::shared_ptr<Process> newProcess)
 {
 	this->readyQueue.push_back(newProcess);
-	/*for(int i = 0; i < this->readyQueue.size(); i++)
-		std::cout << this->readyQueue[i]->processId << std::endl;*/
 }
 
 void Scheduler::assignProcesses()
 {
-	//std::cout << "assigned" << std::endl;
 	std::vector<std::thread> cpuCores;
 	
 	for(int i = 0; i < this->configVars["num-cpu"]; i++)
@@ -69,21 +66,25 @@ void Scheduler::assignProcesses()
 		mtx.lock();
 		for(int i = 0; i < this->configVars["num-cpu"]; i++)
 		{
+			
 			if(this->coreList[i] == -1 && !readyQueue.empty())
 			{
-				
+				mtx.lock();
 				this->coreList[i] = this->readyQueue.front()->processId;
-				cpuCores[i] = std::thread(&Scheduler::runProcesses, sharedInstance, this->readyQueue.front(), i);
+				if(this->scheduler == "\"rr\"")
+					cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
+				else
+					cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
 				this->readyQueue.erase(this->readyQueue.begin());
 				cpuCores[i].detach();
-				
+				mtx.unlock();
 			}
-		}
+		} 
 		mtx.unlock();
 	}
 }
 
-void Scheduler::runProcesses(std::shared_ptr<Process> runningProcess, int coreIndex)
+void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int coreIndex)
 {
 	unsigned int previousCycle = cpuCycle;
 	unsigned int endLine;
@@ -108,6 +109,29 @@ void Scheduler::runProcesses(std::shared_ptr<Process> runningProcess, int coreIn
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
 	this->readyQueue.push_back(runningProcess);
+	mtx.unlock();
+}
+
+void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int coreIndex)
+{
+	unsigned int previousCycle = cpuCycle;
+	for(int i = runningProcess->currentLine; i < runningProcess->totalLine;)
+	{
+		if(cpuCycle-previousCycle == configVars["delay-per-exec"])
+		{
+			previousCycle = cpuCycle;
+			runningProcess->coreUsed = coreIndex;
+			runningProcess->currentLine += 1;
+			runningProcess->lastExecuted = time(NULL);
+			Sleep(this->configVars["delay-per-exec"]);
+			i++;
+		}
+		
+	}
+	mtx.lock();
+	runningProcess->coreUsed = -1;
+	this->coreList[coreIndex] = -1;
+	mtx.unlock();
 	mtx.unlock();
 }
 

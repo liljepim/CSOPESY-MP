@@ -18,7 +18,8 @@ public:
 	void readConfig();
 	void registerProcess(std::shared_ptr<Process> newProcess);
 	void assignProcesses();
-	void runProcesses(std::shared_ptr<Process> runningProcess, int coreIndex);
+	void runProcessesRR(std::shared_ptr<Process> runningProcess, int coreIndex);
+	void runProcessesFCFS(std::shared_ptr<Process> runningProcess, int coreIndex);
 	void startTester();
 	void stopTester();
 	std::string coreSummary();
