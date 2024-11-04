@@ -153,14 +153,15 @@ std::string Scheduler::coreSummary()
 {
 	int totalCount = this->configVars["num-cpu"];
 	int usedCounter = 0;
-	for(auto i = this->coreList.begin(); i != coreList.end(); i++)
+	std::vector<int> dummyList = this->coreList;
+	for(auto i = dummyList.begin(); i != dummyList.end(); i++)
 	{
 		if((*i) != -1)
 		{
 			usedCounter++;
 		}
 	}
-	float percent = usedCounter / totalCount * 100.0f;
+	float percent = (usedCounter*100.0f) / totalCount;
 	int remainingCore = totalCount - usedCounter;
 	std::string summary = std::format("CPU Utilization: {0:.2f}%", percent);
 	summary += "\nCores Used: " + std::to_string(usedCounter) + "\n";
