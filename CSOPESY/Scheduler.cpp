@@ -69,15 +69,15 @@ void Scheduler::assignProcesses()
 			
 			if(this->coreList[i] == -1 && !readyQueue.empty())
 			{
-				mtx.lock();
+				
 				this->coreList[i] = this->readyQueue.front()->processId;
 				if(this->scheduler == "\"rr\"")
 					cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
 				else
-					cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
+					cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
 				this->readyQueue.erase(this->readyQueue.begin());
 				cpuCores[i].detach();
-				mtx.unlock();
+				
 			}
 		} 
 		mtx.unlock();
@@ -131,7 +131,6 @@ void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int co
 	mtx.lock();
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
-	mtx.unlock();
 	mtx.unlock();
 }
 
