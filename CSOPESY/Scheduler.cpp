@@ -7,6 +7,7 @@
 #include <functional>
 #include <ctime>
 #include <mutex>
+#include <format>
 
 extern unsigned int cpuCycle;
 extern bool isTesting;
@@ -65,18 +66,20 @@ void Scheduler::assignProcesses()
 	
 	while(true)
 	{
+		mtx.lock();
 		for(int i = 0; i < this->configVars["num-cpu"]; i++)
 		{
 			if(this->coreList[i] == -1 && !readyQueue.empty())
 			{
-				mtx.lock();
+				
 				this->coreList[i] = this->readyQueue.front()->processId;
 				cpuCores[i] = std::thread(&Scheduler::runProcesses, sharedInstance, this->readyQueue.front(), i);
 				this->readyQueue.erase(this->readyQueue.begin());
 				cpuCores[i].detach();
-				mtx.unlock();
+				
 			}
-		} 
+		}
+		mtx.unlock();
 	}
 }
 
@@ -101,15 +104,47 @@ void Scheduler::runProcesses(std::shared_ptr<Process> runningProcess, int coreIn
 		}
 		
 	}
+	mtx.lock();
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
 	this->readyQueue.push_back(runningProcess);
+	mtx.unlock();
+}
+
+int Scheduler::getMax()
+{
+	return this->configVars["max-ins"];
+}
+
+int Scheduler::getMin()
+{
+	return this->configVars["min-ins"];
 }
 
 void Scheduler::destroy()
 {
 	delete sharedInstance;
 }
+
+void Scheduler::coreSummary()
+{
+	int totalCount = this->configVars["num-cpu"];
+	int usedCounter = 0;
+	for(auto i = this->coreList.begin(); i != coreList.end(); i++)
+	{
+		std::cout << *i << std::endl;
+		if((*i) != -1)
+		{
+			usedCounter++;
+		}
+	}
+	float percent = usedCounter / totalCount * 100.0f;
+	std::string perc = std::format("{0:.2f}%", percent);
+	std::cout << "CPU Utilization: " <<  perc << std::endl;
+	std::cout << "Cores Used: " << usedCounter << std::endl;
+	std::cout << "Cores Available: " << totalCount - usedCounter << std::endl;
+}
+
 
 void Scheduler::varTest()
 {

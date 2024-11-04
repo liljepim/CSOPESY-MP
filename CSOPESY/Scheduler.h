@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <map>
+#pragma once
 #include <vector>
 #include "Typedef.h"
 #include "ConsoleManager.h"
@@ -20,7 +21,9 @@ public:
 	void runProcesses(std::shared_ptr<Process> runningProcess, int coreIndex);
 	void startTester();
 	void stopTester();
-
+	void coreSummary();
+	int getMax();
+	int getMin();
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;

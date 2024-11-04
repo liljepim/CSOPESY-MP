@@ -1,15 +1,21 @@
 #include "Process.h"
+#include "Scheduler.h"
+#include <random>
 
 int Process::totalCount = 1;
 
 Process::Process(String processName)
 {
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> distrib(Scheduler::getInstance()->getMin(), Scheduler::getInstance()->getMax());
+
 	this->name = processName;
 	this->processId = Process::totalCount;
 	this->totalCount++;
 	this->currentLine = 0;
-	this->totalLine = 100;
-	
+	this->totalLine = distrib(gen);
+	this->coreUsed = -1;
 }
 
 void Process::processBody(){
