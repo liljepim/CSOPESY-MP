@@ -4,6 +4,8 @@
 #include <string>
 #include <chrono>
 #include <mutex>
+#include <fstream>
+#include <filesystem>
 
 extern std::mutex mtx;
 extern bool osInitialized;
@@ -37,7 +39,7 @@ void MainConsole::display()
 void MainConsole::processList()
 {
 	mtx.lock();
-	Scheduler::getInstance()->coreSummary();
+	std::cout << Scheduler::getInstance()->coreSummary() << std::endl;
 	std::cout << "\nRunning processes:" << std::endl;
 	int runningCount = 0;
 	for(auto i = ConsoleManager::getInstance()->getConsoleTable()->begin(); i != ConsoleManager::getInstance()->getConsoleTable()->end(); i++)
@@ -65,6 +67,46 @@ void MainConsole::processList()
 		}
 
 	}
+	mtx.unlock();
+}
+
+void MainConsole::generateLog()
+{
+	mtx.lock();
+	std::ofstream logFile("csopesy-log.txt");
+
+	logFile << Scheduler::getInstance()->coreSummary() << std::endl;
+	Scheduler::getInstance()->coreSummary();
+	logFile << "\nRunning processes:" << std::endl;
+	int runningCount = 0;
+	for (auto i = ConsoleManager::getInstance()->getConsoleTable()->begin(); i != ConsoleManager::getInstance()->getConsoleTable()->end(); i++)
+	{
+		std::shared_ptr<BaseConsole> tempHolder = std::dynamic_pointer_cast<BaseConsole>(i->second);
+		if (i->first != "MAIN_CONSOLE" && tempHolder->getAttachedProcess()->currentLine != tempHolder->getAttachedProcess()->totalLine && tempHolder->getAttachedProcess()->coreUsed != -1)
+		{
+			logFile << tempHolder->getName() << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempHolder->getAttachedProcess()->lastExecuted))) << "\tCore:" << tempHolder->getAttachedProcess()->coreUsed << "\t" << tempHolder->getAttachedProcess()->currentLine << "/" << tempHolder->getAttachedProcess()->totalLine << std::endl;
+			runningCount++;
+		}
+
+	}
+	if (runningCount == 0)
+	{
+		logFile << "No running processes." << std::endl;
+	}
+
+	logFile << "\nFinished processes:" << std::endl;
+	for (auto i = ConsoleManager::getInstance()->getConsoleTable()->begin(); i != ConsoleManager::getInstance()->getConsoleTable()->end(); i++)
+	{
+		std::shared_ptr<BaseConsole> tempHolder = std::dynamic_pointer_cast<BaseConsole>(i->second);
+		if (i->first != "MAIN_CONSOLE" && tempHolder->getAttachedProcess()->currentLine == tempHolder->getAttachedProcess()->totalLine)
+		{
+			logFile << tempHolder->getName() << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempHolder->getAttachedProcess()->lastExecuted))) << "\tFinished\t" << tempHolder->getAttachedProcess()->currentLine << "/" << tempHolder->getAttachedProcess()->totalLine << std::endl;
+		}
+
+	}
+
+	logFile.close();
+	std::cout << "Report generated at " << std::filesystem::current_path() << "\\csopesy-log.txt" << std::endl;
 	mtx.unlock();
 }
 
@@ -125,6 +167,10 @@ void MainConsole::process()
 			else if (command == "show-cycle")
 			{
 				std::cout << cpuCycle << std::endl;
+			}
+			else if (command == "report-util")
+			{
+				generateLog();
 			}
 			else if (command == "exit")
 			{

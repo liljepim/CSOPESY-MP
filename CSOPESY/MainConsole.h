@@ -12,6 +12,7 @@ public:
 	void display() override;
 	void printBanner() const;
 	void processList();
+	void generateLog();
 private:
 	bool refreshed = false;
 	bool initialized = true;

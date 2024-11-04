@@ -126,23 +126,23 @@ void Scheduler::destroy()
 	delete sharedInstance;
 }
 
-void Scheduler::coreSummary()
+std::string Scheduler::coreSummary()
 {
 	int totalCount = this->configVars["num-cpu"];
 	int usedCounter = 0;
 	for(auto i = this->coreList.begin(); i != coreList.end(); i++)
 	{
-		std::cout << *i << std::endl;
 		if((*i) != -1)
 		{
 			usedCounter++;
 		}
 	}
 	float percent = usedCounter / totalCount * 100.0f;
-	std::string perc = std::format("{0:.2f}%", percent);
-	std::cout << "CPU Utilization: " <<  perc << std::endl;
-	std::cout << "Cores Used: " << usedCounter << std::endl;
-	std::cout << "Cores Available: " << totalCount - usedCounter << std::endl;
+	int remainingCore = totalCount - usedCounter;
+	std::string summary = std::format("CPU Utilization: {0:.2f}%", percent);
+	summary += "\nCores Used: " + std::to_string(usedCounter) + "\n";
+	summary += "Cores Available: " + std::to_string(remainingCore);
+	return summary;
 }
 
 

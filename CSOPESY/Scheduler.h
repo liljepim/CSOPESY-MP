@@ -21,7 +21,7 @@ public:
 	void runProcesses(std::shared_ptr<Process> runningProcess, int coreIndex);
 	void startTester();
 	void stopTester();
-	void coreSummary();
+	std::string coreSummary();
 	int getMax();
 	int getMin();
 private:
