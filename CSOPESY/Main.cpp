@@ -5,10 +5,17 @@
 #include <thread>
 #include <chrono>
 #include <ctime>
+#include <mutex>
+
+std::mutex mtx;
 
 typedef std::string String;
 
+
+
 bool osInitialized = false;
+bool isTesting = false;
+
 unsigned int cpuCycle = 0;
 
 

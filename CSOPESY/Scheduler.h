@@ -5,6 +5,7 @@
 #include "Typedef.h"
 #include "ConsoleManager.h"
 #include "Process.h"
+#include "BaseConsole.h"
 
 class Scheduler
 {
@@ -17,8 +18,11 @@ public:
 	void registerProcess(std::shared_ptr<Process> newProcess);
 	void assignProcesses();
 	void runProcesses(std::shared_ptr<Process> runningProcess, int coreIndex);
+	void startTester();
+	void stopTester();
 
 private:
+	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;
 	std::map<String, int> configVars;
 	String scheduler;

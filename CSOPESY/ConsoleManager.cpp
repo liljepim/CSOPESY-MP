@@ -75,6 +75,16 @@ bool ConsoleManager::registerScreen(std::shared_ptr<BaseConsole> consoleRef)
 	return true;
 }
 
+bool ConsoleManager::registerDummy(std::shared_ptr<BaseConsole> consoleRef)
+{
+	if (this->consoleTable.contains(consoleRef->getName()))
+	{
+		return false;
+	}
+	this->consoleTable[consoleRef->getName()] = consoleRef;
+	return true;
+}
+
 void ConsoleManager::returnToPreviousConsole()
 {
 	if(this->previousConsole != nullptr)

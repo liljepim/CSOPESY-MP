@@ -28,6 +28,7 @@ public:
 	void switchConsole(String consoleName);
 
 	bool registerScreen(std::shared_ptr<BaseConsole> consoleRef);
+	bool registerDummy(std::shared_ptr<BaseConsole> consoleRef);
 	bool switchToScreen(String screenName);
 	/*void unregisterScreen(String screenName);*/
 

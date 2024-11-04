@@ -6,8 +6,12 @@
 #include <windows.h>
 #include <functional>
 #include <ctime>
+#include <mutex>
 
 extern unsigned int cpuCycle;
+extern bool isTesting;
+unsigned int dummyCounter = 0;
+extern std::mutex mtx;
 
 Scheduler* Scheduler::sharedInstance = nullptr;
 
@@ -65,10 +69,12 @@ void Scheduler::assignProcesses()
 		{
 			if(this->coreList[i] == -1 && !readyQueue.empty())
 			{
+				mtx.lock();
 				this->coreList[i] = this->readyQueue.front()->processId;
 				cpuCores[i] = std::thread(&Scheduler::runProcesses, sharedInstance, this->readyQueue.front(), i);
 				this->readyQueue.erase(this->readyQueue.begin());
 				cpuCores[i].detach();
+				mtx.unlock();
 			}
 		} 
 	}
@@ -109,6 +115,39 @@ void Scheduler::varTest()
 {
 	for (auto it = this->configVars.begin(); it != this->configVars.end(); it++) 
         std::cout << "Key: " << it->first << ", Value: " << it->second << std::endl;
+}
+
+void Scheduler::generateDummy(ConsoleManager* cmInstance)
+{
+	int prevCycle = cpuCycle;
+
+	while(isTesting)
+	{
+		if(cpuCycle-prevCycle >= this->configVars["batch-process-freq"])
+		{
+			mtx.lock();
+			std::string tempConsoleName = "Process_" + std::to_string(dummyCounter);
+			std::shared_ptr<BaseConsole> tempConsole = std::make_shared<BaseConsole>
+			(tempConsoleName);
+			this->registerProcess(tempConsole->getAttachedProcess());
+			cmInstance->registerDummy(tempConsole);
+			dummyCounter++;
+			prevCycle = cpuCycle;
+			mtx.unlock();
+		}
+	}
+}
+
+void Scheduler::startTester()
+{
+	isTesting = true;
+	std::thread dummyGenerator(&Scheduler::generateDummy, sharedInstance, ConsoleManager::getInstance());
+	dummyGenerator.detach();
+}
+
+void Scheduler::stopTester()
+{
+	isTesting = false;
 }
 
 Scheduler::Scheduler()

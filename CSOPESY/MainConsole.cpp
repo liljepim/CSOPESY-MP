@@ -3,8 +3,13 @@
 #include <format>
 #include <string>
 #include <chrono>
+#include <mutex>
+
+extern std::mutex mtx;
 extern bool osInitialized;
 extern unsigned int cpuCycle;
+extern bool isTesting;
+
 void MainConsole::printBanner() const
 {
 	std::cout << "    {__     {__ __      {____     {_______  {________  {__ __  {__      {__\n";
@@ -31,6 +36,7 @@ void MainConsole::display()
 
 void MainConsole::processList()
 {
+	mtx.lock();
 	std::cout << "\nRunning processes:" << std::endl;
 	int runningCount = 0;
 	for(auto i = ConsoleManager::getInstance()->getConsoleTable()->begin(); i != ConsoleManager::getInstance()->getConsoleTable()->end(); i++)
@@ -58,6 +64,7 @@ void MainConsole::processList()
 		}
 
 	}
+	mtx.unlock();
 }
 
 void MainConsole::process()
@@ -103,12 +110,16 @@ void MainConsole::process()
 			}
 			else if (command == "screen -ls")
 			{
-
 				processList();
 			}
 			else if (command == "scheduler-test")
 			{
-				
+				if(!isTesting)
+					Scheduler::getInstance()->startTester();
+			}
+			else if (command == "scheduler-stop")
+			{
+				Scheduler::getInstance()->stopTester();
 			}
 			else if (command == "show-cycle")
 			{
