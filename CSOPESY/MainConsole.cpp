@@ -40,6 +40,7 @@ void MainConsole::processList()
 {
 	mtx.lock();
 	std::cout << Scheduler::getInstance()->coreSummary() << std::endl;
+	//std::cout << "processCount: " << Scheduler::getInstance()->processCount << std::endl;
 	std::cout << "\nRunning processes:" << std::endl;
 	int runningCount = 0;
 	for(auto i = ConsoleManager::getInstance()->getConsoleTable()->begin(); i != ConsoleManager::getInstance()->getConsoleTable()->end(); i++)

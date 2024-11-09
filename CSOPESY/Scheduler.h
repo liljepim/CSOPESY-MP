@@ -25,6 +25,7 @@ public:
 	std::string coreSummary();
 	int getMax();
 	int getMin();
+	int processCount = 0;
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;

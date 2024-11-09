@@ -52,6 +52,7 @@ void Scheduler::readConfig()
 void Scheduler::registerProcess(std::shared_ptr<Process> newProcess)
 {
 	this->readyQueue.push_back(newProcess);
+	this->processCount += 1;
 }
 
 void Scheduler::assignProcesses()
@@ -69,7 +70,6 @@ void Scheduler::assignProcesses()
 			
 			if(this->coreList[i] == -1 && !readyQueue.empty())
 			{
-				
 				this->coreList[i] = this->readyQueue.front()->processId;
 				if(this->scheduler == "\"rr\"")
 					cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
@@ -100,7 +100,6 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 			runningProcess->coreUsed = coreIndex;
 			runningProcess->currentLine += 1;
 			runningProcess->lastExecuted = time(NULL);
-			Sleep(this->configVars["delay-per-exec"]);
 			i++;
 		}
 		
@@ -123,7 +122,6 @@ void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int co
 			runningProcess->coreUsed = coreIndex;
 			runningProcess->currentLine += 1;
 			runningProcess->lastExecuted = time(NULL);
-			Sleep(this->configVars["delay-per-exec"]);
 			i++;
 		}
 		
@@ -131,6 +129,7 @@ void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int co
 	mtx.lock();
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
+	this->processCount -= 1;
 	mtx.unlock();
 }
 
