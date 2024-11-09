@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/CSOPESY/config.txt
+/.gitignore
+/CSOPESY/Scheduler.cpp
+/CSOPESY/csopesy-log.txt
+/.gitignore
+/.gitignore
