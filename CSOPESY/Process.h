@@ -16,6 +16,7 @@ public:
 	time_t timeFinished;
 	void processBody();
 	int coreUsed;
+	int requiredMem;
 private:
 	static int totalCount;
 };

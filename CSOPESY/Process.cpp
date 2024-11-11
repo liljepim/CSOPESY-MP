@@ -16,6 +16,7 @@ Process::Process(String processName)
 	this->currentLine = 0;
 	this->totalLine = distrib(gen);
 	this->coreUsed = -1;
+	this->requiredMem = 4096;
 }
 
 void Process::processBody(){

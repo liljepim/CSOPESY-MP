@@ -14,6 +14,27 @@ extern bool isTesting;
 unsigned int dummyCounter = 0;
 extern std::mutex mtx;
 
+class IMemoryAllocator
+{
+public:
+	virtual void* allocate(int size) = 0;
+	virtual void deallocate(void* ptr) = 0;
+};
+
+class FlatMemoryAllocator : public IMemoryAllocator
+{
+public:
+	FlatMemoryAllocator(int maximumSize)
+	{
+		this->maximumSize = maximumSize;
+		this->allocatedSize = 0;
+	}
+private:
+	int maximumSize;
+	int allocatedSize;
+	
+};
+
 Scheduler* Scheduler::sharedInstance = nullptr;
 
 Scheduler* Scheduler::getInstance()
