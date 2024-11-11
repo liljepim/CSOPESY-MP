@@ -26,7 +26,7 @@ void incrementCycle()
 		if (osInitialized)
 		{
 			cpuCycle++;
-			Sleep(10);
+			Sleep(50);
 		}
 	}
 	

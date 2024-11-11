@@ -42,7 +42,8 @@ void MainConsole::processList()
 	std::cout << Scheduler::getInstance()->coreSummary() << std::endl;
 	std::cout << "\nRunning processes:" << std::endl;
 	int runningCount = 0;
-	for(auto i = ConsoleManager::getInstance()->getConsoleTable()->begin(); i != ConsoleManager::getInstance()->getConsoleTable()->end(); i++)
+	auto consTable = ConsoleManager::getInstance()->getConsoleTable();
+	for(auto i = consTable->begin(); i != consTable->end(); i++)
 	{
 		std::shared_ptr<BaseConsole> tempHolder = std::dynamic_pointer_cast<BaseConsole>(i->second);
 		if(i->first != "MAIN_CONSOLE" && tempHolder->getAttachedProcess()->currentLine != tempHolder->getAttachedProcess()->totalLine && tempHolder->getAttachedProcess()->coreUsed != -1)
@@ -52,13 +53,14 @@ void MainConsole::processList()
 		}
 		
 	}
+	
 	if(runningCount == 0 )
 	{
 		std::cout << "No running processes." << std::endl;
 	}
 
 	std::cout << "\nFinished processes:" << std::endl;
-	for (auto i = ConsoleManager::getInstance()->getConsoleTable()->begin(); i != ConsoleManager::getInstance()->getConsoleTable()->end(); i++)
+	for (auto i = consTable->begin(); i != consTable->end(); i++)
 	{
 		std::shared_ptr<BaseConsole> tempHolder = std::dynamic_pointer_cast<BaseConsole>(i->second);
 		if (i->first != "MAIN_CONSOLE" && tempHolder->getAttachedProcess()->currentLine == tempHolder->getAttachedProcess()->totalLine)

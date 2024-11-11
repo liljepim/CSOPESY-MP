@@ -94,13 +94,12 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 		endLine = runningProcess->currentLine + this->configVars["quantum-cycles"];
 	for(int i = runningProcess->currentLine; i < endLine;)
 	{
-		if(cpuCycle-previousCycle == configVars["delay-per-exec"])
+		if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
 		{
 			previousCycle = cpuCycle;
 			runningProcess->coreUsed = coreIndex;
 			runningProcess->currentLine += 1;
 			runningProcess->lastExecuted = time(NULL);
-			Sleep(this->configVars["delay-per-exec"]);
 			i++;
 		}
 		
@@ -117,13 +116,12 @@ void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int co
 	unsigned int previousCycle = cpuCycle;
 	for(int i = runningProcess->currentLine; i < runningProcess->totalLine;)
 	{
-		if(cpuCycle-previousCycle == configVars["delay-per-exec"])
+		if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
 		{
 			previousCycle = cpuCycle;
 			runningProcess->coreUsed = coreIndex;
 			runningProcess->currentLine += 1;
 			runningProcess->lastExecuted = time(NULL);
-			Sleep(this->configVars["delay-per-exec"]);
 			i++;
 		}
 		
@@ -150,7 +148,7 @@ void Scheduler::destroy()
 }
 
 std::string Scheduler::coreSummary()
-{
+{	
 	int totalCount = this->configVars["num-cpu"];
 	int usedCounter = 0;
 	std::vector<int> dummyList = this->coreList;
@@ -165,7 +163,7 @@ std::string Scheduler::coreSummary()
 	int remainingCore = totalCount - usedCounter;
 	std::string summary = std::format("CPU Utilization: {0:.2f}%", percent);
 	summary += "\nCores Used: " + std::to_string(usedCounter) + "\n";
-	summary += "Cores Available: " + std::to_string(remainingCore);
+	summary += "Cores Available: " + std::to_string(remainingCore);	
 	return summary;
 }
 
@@ -182,7 +180,7 @@ void Scheduler::generateDummy(ConsoleManager* cmInstance)
 
 	while(isTesting)
 	{
-		if(cpuCycle-prevCycle >= this->configVars["batch-process-freq"])
+		if(cpuCycle-prevCycle >= this->configVars["batch-process-freq"]+1)
 		{
 			mtx.lock();
 			std::string tempConsoleName = "Process_" + std::to_string(dummyCounter);
