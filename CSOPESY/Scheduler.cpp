@@ -199,11 +199,12 @@ void Scheduler::assignProcesses()
 			}
 		}
 		mtx.unlock();
-		if(cpuCycle-previousCycle >= (configVars["delay-per-exec"]+1))
+		if(cpuCycle-previousCycle >= (configVars["quantum-cycles"]+1))
 		{
+			previousCycle = cpuCycle;
 			std::ofstream memoryStamp;
 			memoryStamp.open("memory_stamps/memory_stamp_" + std::to_string(cpuCycle) + ".txt");
-			//memoryStamp << "Timestamp: " << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(time(NULL))) << std::endl;
+			memoryStamp << "Timestamp: " << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(time(NULL)))) << std::endl;
 			memoryStamp << "Number of processes in memory: " ;
 			int processCounter = 0;
 			for(int i = 0; i < 4; i++)
@@ -212,6 +213,43 @@ void Scheduler::assignProcesses()
 					processCounter += 1;
 			}
 			memoryStamp << processCounter << std::endl;
+			bool hasExtFrag = false;
+			int firstFree = -1;
+			int nextFree = -1;
+
+			for(int i = 0; i < 4; i++)
+			{
+				if(this->memoryMap[i] == -1)
+				{
+					if(firstFree == -1)
+					{
+						firstFree = i;
+					}
+					else
+					{
+						nextFree = i;
+					}
+				}
+				if((nextFree - firstFree) >= 2)
+				{
+					hasExtFrag = true;
+					break;
+				}
+			}
+
+			int extFrag = 0;
+			if (hasExtFrag)
+			{
+				for(int i = 0; i < 4; i++)
+				{
+					if(memoryMap[i] == -1)
+					{
+						extFrag += 4096;
+					}
+				}
+			}
+			memoryStamp << "Total external fragmentation in KB: " << extFrag << std::endl;
+			
 			memoryStamp << "----end---- = 16384" << std::endl << std::endl;
 			for(int k = 4; k > 0; k--)
 			{
