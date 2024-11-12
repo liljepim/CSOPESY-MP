@@ -14,6 +14,7 @@ extern bool isTesting;
 unsigned int dummyCounter = 0;
 extern std::mutex mtx;
 
+/*
 class IMemoryAllocator
 {
 public:
@@ -87,6 +88,7 @@ private:
 		allocationMap[index] = false;
 	}
 };
+*/
 
 Scheduler* Scheduler::sharedInstance = nullptr;
 
@@ -130,7 +132,9 @@ void Scheduler::registerProcess(std::shared_ptr<Process> newProcess)
 
 void Scheduler::assignProcesses()
 {
+	unsigned int previousCycle = cpuCycle;
 	std::vector<std::thread> cpuCores;
+	bool memIsFree = false;
 	
 	for(int i = 0; i < this->configVars["num-cpu"]; i++)
 		cpuCores.push_back(std::thread());
@@ -140,18 +144,55 @@ void Scheduler::assignProcesses()
 		mtx.lock();
 		for(int i = 0; i < this->configVars["num-cpu"]; i++)
 		{
-			
+			int freeIndex;
+			for(freeIndex = 0; freeIndex < 4; freeIndex++)
+			{
+				if(this->memoryMap[freeIndex] == -1)
+				{
+					memIsFree = true;
+					break;
+				}
+				else
+					memIsFree = false;
+			}
 			if(this->coreList[i] == -1 && !readyQueue.empty())
 			{
-				
-				this->coreList[i] = this->readyQueue.front()->processId;
-				if(this->scheduler == "\"rr\"")
-					cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
+				if(memIsFree)
+				{
+					this->coreList[i] = this->readyQueue.front()->processId;
+					bool inMap = false;
+					for(int j = 0; j < 4; j++)
+					{
+						if(this->memoryMap[j] == this->readyQueue.front()->processId)
+						{
+							inMap = true;
+							break;
+						}
+					}
+					if(inMap == false)
+						this->memoryMap[freeIndex] = this->readyQueue.front()->processId;
+					if(this->scheduler == "\"rr\"")
+						cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
+					else if(this->scheduler == "\"fcfs\"")
+						cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
+					this->readyQueue.erase(this->readyQueue.begin());
+					cpuCores[i].detach();
+				}
 				else
-					cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
-				this->readyQueue.erase(this->readyQueue.begin());
-				cpuCores[i].detach();
-				
+				{
+					this->readyQueue.push_back(this->readyQueue.front());
+					this->readyQueue.erase(this->readyQueue.begin());
+				}
+			}
+			if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
+			{
+				std::ofstream memoryStamp;
+				memoryStamp.open("memory_stamps/memory_stamp_" + std::to_string(cpuCycle) + ".txt");
+				for(int j = 0; j < 4; j++)
+				{
+					memoryStamp << std::to_string(this->memoryMap[j]) + "\n";
+				}
+				memoryStamp.close();
 			}
 		} 
 		mtx.unlock();
@@ -176,12 +217,23 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 			runningProcess->lastExecuted = time(NULL);
 			i++;
 		}
-		
 	}
 	mtx.lock();
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
-	this->readyQueue.push_back(runningProcess);
+	if(runningProcess->currentLine != runningProcess->totalLine)
+		this->readyQueue.push_back(runningProcess);
+	else
+	{
+		for(int i = 0; i < 4; i++)
+		{
+			if(runningProcess->processId == this->memoryMap[i])
+			{
+				this->memoryMap[i] = -1;
+				break;
+			}
+		}
+	}
 	mtx.unlock();
 }
 
@@ -284,4 +336,8 @@ void Scheduler::stopTester()
 Scheduler::Scheduler()
 {
 	//initialize the scheduler
+	this->memoryMap[0] = -1;
+	this->memoryMap[1] = -1;
+	this->memoryMap[2] = -1;
+	this->memoryMap[3] = -1;
 }

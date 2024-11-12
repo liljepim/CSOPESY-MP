@@ -25,6 +25,7 @@ public:
 	std::string coreSummary();
 	int getMax();
 	int getMin();
+	int memoryMap[4];
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;
