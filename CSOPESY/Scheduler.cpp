@@ -203,7 +203,7 @@ void Scheduler::assignProcesses()
 		{
 			std::ofstream memoryStamp;
 			memoryStamp.open("memory_stamps/memory_stamp_" + std::to_string(cpuCycle) + ".txt");
-			memoryStamp << "Timestamp: " << << std::endl;
+			//memoryStamp << "Timestamp: " << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(time(NULL))) << std::endl;
 			memoryStamp << "Number of processes in memory: " ;
 			int processCounter = 0;
 			for(int i = 0; i < 4; i++)
