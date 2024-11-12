@@ -40,6 +40,10 @@ void MainConsole::processList()
 {
 	mtx.lock();
 	std::cout << Scheduler::getInstance()->coreSummary() << std::endl;
+	std::cout << "Ready queue: ";
+	for(int i = 0; i < Scheduler::getInstance()->readyQueue.size(); i++)
+		std::cout << (Scheduler::getInstance()->readyQueue[i])->processId << " ";
+	std::cout << std::endl;
 	std::cout << "\nRunning processes:" << std::endl;
 	int runningCount = 0;
 	auto consTable = ConsoleManager::getInstance()->getConsoleTable();

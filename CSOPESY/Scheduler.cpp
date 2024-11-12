@@ -157,21 +157,18 @@ void Scheduler::assignProcesses()
 			}
 			if(this->coreList[i] == -1 && !readyQueue.empty())
 			{
-				if(memIsFree)
+				bool inMap = false;
+				for(int j = 0; j < 4; j++)
 				{
-					//std::cout << "assigned!\n" << std::endl;
-					this->coreList[i] = this->readyQueue.front()->processId;
-					bool inMap = false;
-					for(int j = 0; j < 4; j++)
+					if(this->memoryMap[j] == this->readyQueue.front()->processId)
 					{
-						if(this->memoryMap[j] == this->readyQueue.front()->processId)
-						{
-							inMap = true;
-							break;
-						}
+						inMap = true;
+						break;
 					}
-					if(inMap == false)
-						this->memoryMap[freeIndex] = this->readyQueue.front()->processId;
+				}
+				if(inMap)
+				{
+					this->coreList[i] = this->readyQueue.front()->processId;
 					if(this->scheduler == "\"rr\"")
 						cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
 					else if(this->scheduler == "\"fcfs\"")
@@ -179,15 +176,29 @@ void Scheduler::assignProcesses()
 					this->readyQueue.erase(this->readyQueue.begin());
 					cpuCores[i].detach();
 				}
-				else
+				else if(!inMap)
 				{
-					this->readyQueue.push_back(this->readyQueue.front());
-					this->readyQueue.erase(this->readyQueue.begin());
+					if(memIsFree)
+					{
+						this->coreList[i] = this->readyQueue.front()->processId;
+						this->memoryMap[freeIndex] = this->readyQueue.front()->processId;
+						if(this->scheduler == "\"rr\"")
+							cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
+						else if(this->scheduler == "\"fcfs\"")
+							cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
+						this->readyQueue.erase(this->readyQueue.begin());
+						cpuCores[i].detach();
+					}
+					else
+					{
+						this->readyQueue.push_back(this->readyQueue.front());
+						this->readyQueue.erase(this->readyQueue.begin());
+					}
 				}
 			}
 		}
 		mtx.unlock();
-		/*if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
+		if(cpuCycle-previousCycle >= (configVars["delay-per-exec"]+1))
 		{
 			std::ofstream memoryStamp;
 			memoryStamp.open("memory_stamps/memory_stamp_" + std::to_string(cpuCycle) + ".txt");
@@ -196,7 +207,7 @@ void Scheduler::assignProcesses()
 				memoryStamp << std::to_string(this->memoryMap[j]) + "\n";
 			}
 			memoryStamp.close();
-		}*/
+		}
 	}
 }
 
@@ -305,7 +316,6 @@ void Scheduler::varTest()
 void Scheduler::generateDummy(ConsoleManager* cmInstance)
 {
 	int prevCycle = cpuCycle;
-
 	while(isTesting)
 	{
 		if(cpuCycle-prevCycle >= (this->configVars["batch-process-freq"]+1))
