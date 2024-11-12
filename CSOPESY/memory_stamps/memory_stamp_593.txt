@@ -1,4 +1,9 @@
-1
-2
-3
-4
+Timestamp: 
+Number of processes in memory: 4
+----end---- = 16384
+
+12288P4
+8192P3
+4096P2
+0P1
+----start---- = 0

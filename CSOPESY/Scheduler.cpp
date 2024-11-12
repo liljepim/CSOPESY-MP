@@ -8,6 +8,7 @@
 #include <ctime>
 #include <mutex>
 #include <format>
+#include <chrono>
 
 extern unsigned int cpuCycle;
 extern bool isTesting;
@@ -202,10 +203,26 @@ void Scheduler::assignProcesses()
 		{
 			std::ofstream memoryStamp;
 			memoryStamp.open("memory_stamps/memory_stamp_" + std::to_string(cpuCycle) + ".txt");
-			for(int j = 0; j < 4; j++)
+			memoryStamp << "Timestamp: " << << std::endl;
+			memoryStamp << "Number of processes in memory: " ;
+			int processCounter = 0;
+			for(int i = 0; i < 4; i++)
 			{
-				memoryStamp << std::to_string(this->memoryMap[j]) + "\n";
+				if(this->memoryMap[i] != -1)
+					processCounter += 1;
 			}
+			memoryStamp << processCounter << std::endl;
+			memoryStamp << "----end---- = 16384" << std::endl << std::endl;
+			for(int k = 4; k > 0; k--)
+			{
+				if(this->memoryMap[k - 1] != -1)
+				{
+					memoryStamp << k * 4096 << std::endl;
+					memoryStamp << "P" << this->memoryMap[k - 1] << std::endl;
+					memoryStamp << (k - 1) * 4096 << std::endl << std::endl;
+				}
+			}
+			memoryStamp << "----start---- = 0" << std::endl;
 			memoryStamp.close();
 		}
 	}
