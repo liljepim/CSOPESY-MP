@@ -185,9 +185,9 @@ void Scheduler::assignProcesses()
 					this->readyQueue.erase(this->readyQueue.begin());
 				}
 			}
-		} 
+		}
 		mtx.unlock();
-		if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
+		/*if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
 		{
 			std::ofstream memoryStamp;
 			memoryStamp.open("memory_stamps/memory_stamp_" + std::to_string(cpuCycle) + ".txt");
@@ -196,7 +196,7 @@ void Scheduler::assignProcesses()
 				memoryStamp << std::to_string(this->memoryMap[j]) + "\n";
 			}
 			memoryStamp.close();
-		}
+		}*/
 	}
 }
 
@@ -224,9 +224,8 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 	this->coreList[coreIndex] = -1;
 	if(runningProcess->currentLine != runningProcess->totalLine)
 		this->readyQueue.push_back(runningProcess);
-	else if(runningProcess->currentLine != runningProcess->totalLine)
+	else if(runningProcess->currentLine == runningProcess->totalLine)
 	{
-		std::cout << "done!\n" << std::endl;
 		for(int i = 0; i < 4; i++)
 		{
 			if(runningProcess->processId == this->memoryMap[i])
@@ -309,7 +308,7 @@ void Scheduler::generateDummy(ConsoleManager* cmInstance)
 
 	while(isTesting)
 	{
-		if(cpuCycle-prevCycle >= this->configVars["batch-process-freq"]+1)
+		if(cpuCycle-prevCycle >= (this->configVars["batch-process-freq"]+1))
 		{
 			mtx.lock();
 			std::string tempConsoleName = "Process_" + std::to_string(dummyCounter);
@@ -321,6 +320,7 @@ void Scheduler::generateDummy(ConsoleManager* cmInstance)
 			prevCycle = cpuCycle;
 			mtx.unlock();
 		}
+		Sleep(100);
 	}
 }
 

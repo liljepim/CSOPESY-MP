@@ -26,7 +26,7 @@ void incrementCycle()
 		if (osInitialized)
 		{
 			cpuCycle++;
-			Sleep(50);
+			std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 		}
 	}
 	
