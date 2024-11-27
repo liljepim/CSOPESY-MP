@@ -25,14 +25,14 @@ public:
 	std::string coreSummary();
 	int getMax();
 	int getMin();
-	int processCount = 0;
+	int memoryMap[4];
+	std::vector<std::shared_ptr<Process>> readyQueue;
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;
 	std::map<String, int> configVars;
 	String scheduler;
 	std::vector<Process> processList;
-	std::vector<std::shared_ptr<Process>> readyQueue;
 	std::vector<int> coreList;
 	Scheduler();
 	~Scheduler() = default;
