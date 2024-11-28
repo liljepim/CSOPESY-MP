@@ -23,8 +23,11 @@ public:
 	void startTester();
 	void stopTester();
 	void coreSummary();
+	std::map<String, int> configVars;
 	int getMax();
 	int getMin();
+	int getMemMax();
+	int getMemMin();
 	std::vector<std::shared_ptr<Process>> readyQueue;
 	std::vector<std::shared_ptr<Process>> finishedProcesses;
 	unsigned int previousQQ = 0;
@@ -33,7 +36,6 @@ public:
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;
-	std::map<String, int> configVars;
 	String scheduler;
 	std::vector<Process> processList;
 	std::vector<int> coreList;

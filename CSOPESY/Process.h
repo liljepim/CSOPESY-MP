@@ -17,6 +17,7 @@ public:
 	void processBody();
 	int coreUsed;
 	int requiredMem;
+	int memIndex;
 private:
 	static int totalCount;
 };

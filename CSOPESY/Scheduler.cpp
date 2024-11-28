@@ -244,6 +244,16 @@ int Scheduler::getMin()
 	return this->configVars["min-ins"];
 }
 
+int Scheduler::getMemMax()
+{
+	return this->configVars["max-mem-per-proc"];
+}
+
+int Scheduler::getMemMin()
+{
+	return this->configVars["min-mem-per-proc"];
+}
+
 void Scheduler::destroy()
 {
 	delete sharedInstance;
