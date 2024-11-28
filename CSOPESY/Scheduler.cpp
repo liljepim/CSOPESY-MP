@@ -122,8 +122,10 @@ void Scheduler::readConfig()
 	}
 	for(int i = 0; i < this->configVars["num-cpu"]; i++)
 		this->coreList.push_back(-1);
-	std::thread assignThread(&Scheduler::assignProcesses, sharedInstance);
-	assignThread.detach();
+	for (int i = 0; i < this->configVars["num-cpu"]; i++)
+		cpuCores.push_back(std::thread());
+
+	isOn = true;
 }
 
 void Scheduler::registerProcess(std::shared_ptr<Process> newProcess)
@@ -131,144 +133,164 @@ void Scheduler::registerProcess(std::shared_ptr<Process> newProcess)
 	this->readyQueue.push_back(newProcess);
 }
 
+void Scheduler::startTester()
+{
+	isTesting = true;
+	previousBF = cpuCycle;
+
+}
+
+void Scheduler::stopTester()
+{
+	isTesting = false;
+}
+
 void Scheduler::assignProcesses()
 {
-	unsigned int previousCycle = cpuCycle;
-	std::vector<std::thread> cpuCores;
-	bool memIsFree = false;
-	
-	for(int i = 0; i < this->configVars["num-cpu"]; i++)
-		cpuCores.push_back(std::thread());
-	
-	while(true)
+	if(previousQQ == 0)
 	{
-		mtx.lock();
-		for(int i = 0; i < this->configVars["num-cpu"]; i++)
+		previousQQ = cpuCycle;
+	}
+	if(previousBF == 0)
+	{
+		previousBF = cpuCycle;
+	}
+	mtx.lock();
+	for(int i = 0; i < this->configVars["num-cpu"]; i++)
+	{
+		bool memIsFree = false;
+		int freeIndex;
+		for(freeIndex = 0; freeIndex < 4; freeIndex++)
 		{
-			int freeIndex;
-			for(freeIndex = 0; freeIndex < 4; freeIndex++)
+			if(this->memoryMap[freeIndex] == -1)
 			{
-				if(this->memoryMap[freeIndex] == -1)
+				memIsFree = true;
+				break;
+			}
+			else
+				memIsFree = false;
+		}
+		if(this->coreList[i] == -1 && !readyQueue.empty())
+		{
+			bool inMap = false;
+			for(int j = 0; j < 4; j++)
+			{
+				if(this->memoryMap[j] == this->readyQueue.front()->processId)
 				{
-					memIsFree = true;
+					inMap = true;
 					break;
 				}
-				else
-					memIsFree = false;
 			}
-			if(this->coreList[i] == -1 && !readyQueue.empty())
+			if(inMap)
 			{
-				bool inMap = false;
-				for(int j = 0; j < 4; j++)
-				{
-					if(this->memoryMap[j] == this->readyQueue.front()->processId)
-					{
-						inMap = true;
-						break;
-					}
-				}
-				if(inMap)
+				this->coreList[i] = this->readyQueue.front()->processId;
+				if(this->scheduler == "\"rr\"")
+					cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
+				else if(this->scheduler == "\"fcfs\"")
+					cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
+				this->readyQueue.erase(this->readyQueue.begin());
+				cpuCores[i].detach();
+			}
+			else if(!inMap)
+			{
+				if(memIsFree)
 				{
 					this->coreList[i] = this->readyQueue.front()->processId;
+					this->memoryMap[freeIndex] = this->readyQueue.front()->processId;
 					if(this->scheduler == "\"rr\"")
 						cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
 					else if(this->scheduler == "\"fcfs\"")
 						cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
 					this->readyQueue.erase(this->readyQueue.begin());
 					cpuCores[i].detach();
+					std::cout << "PROCESS-ASSIGNED!" << std::endl;
 				}
-				else if(!inMap)
+				else
 				{
-					if(memIsFree)
-					{
-						this->coreList[i] = this->readyQueue.front()->processId;
-						this->memoryMap[freeIndex] = this->readyQueue.front()->processId;
-						if(this->scheduler == "\"rr\"")
-							cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
-						else if(this->scheduler == "\"fcfs\"")
-							cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
-						this->readyQueue.erase(this->readyQueue.begin());
-						cpuCores[i].detach();
-					}
-					else
-					{
-						this->readyQueue.push_back(this->readyQueue.front());
-						this->readyQueue.erase(this->readyQueue.begin());
-					}
+					this->readyQueue.push_back(this->readyQueue.front());
+					this->readyQueue.erase(this->readyQueue.begin());
 				}
 			}
-		}
-		mtx.unlock();
-		if(cpuCycle-previousCycle >= (configVars["quantum-cycles"]+1))
-		{
-			previousCycle = cpuCycle;
-			std::ofstream memoryStamp;
-			memoryStamp.open("memory_stamps/memory_stamp_" + std::to_string(cpuCycle) + ".txt");
-			memoryStamp << "Timestamp: " << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(time(NULL)))) << std::endl;
-			memoryStamp << "Number of processes in memory: " ;
-			int processCounter = 0;
-			for(int i = 0; i < 4; i++)
-			{
-				if(this->memoryMap[i] != -1)
-					processCounter += 1;
-			}
-			memoryStamp << processCounter << std::endl;
-			bool hasExtFrag = false;
-			int firstFree = -1;
-			int nextFree = -1;
-
-			for(int i = 0; i < 4; i++)
-			{
-				if(this->memoryMap[i] == -1)
-				{
-					if(firstFree == -1)
-					{
-						firstFree = i;
-					}
-					else
-					{
-						nextFree = i;
-					}
-				}
-				if((nextFree - firstFree) >= 2)
-				{
-					hasExtFrag = true;
-					break;
-				}
-			}
-
-			int extFrag = 0;
-			if (hasExtFrag)
-			{
-				for(int i = 0; i < 4; i++)
-				{
-					if(memoryMap[i] == -1)
-					{
-						extFrag += 4096;
-					}
-				}
-			}
-			memoryStamp << "Total external fragmentation in KB: " << extFrag << std::endl;
-			
-			memoryStamp << "----end---- = 16384" << std::endl << std::endl;
-			for(int k = 4; k > 0; k--)
-			{
-				if(this->memoryMap[k - 1] != -1)
-				{
-					memoryStamp << k * 4096 << std::endl;
-					memoryStamp << "P" << this->memoryMap[k - 1] << std::endl;
-					memoryStamp << (k - 1) * 4096 << std::endl << std::endl;
-				}
-			}
-			memoryStamp << "----start---- = 0" << std::endl;
-			memoryStamp.close();
 		}
 	}
+	mtx.unlock();
+	if(cpuCycle-previousQQ == (configVars["quantum-cycles"]+1))
+	{
+		previousQQ = cpuCycle;
+		/*std::ofstream memoryStamp;
+		memoryStamp.open("memory_stamps/memory_stamp_" + std::to_string(cpuCycle) + ".txt");
+		memoryStamp << "Timestamp: " << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(time(NULL)))) << std::endl;
+		memoryStamp << "Number of processes in memory: " ;
+		int processCounter = 0;
+		for(int i = 0; i < 4; i++)
+		{
+			if(this->memoryMap[i] != -1)
+				processCounter += 1;
+		}
+		memoryStamp << processCounter << std::endl;
+		bool hasExtFrag = false;
+		int firstFree = -1;
+		int nextFree = -1;
+
+		for(int i = 0; i < 4; i++)
+		{
+			if(this->memoryMap[i] == -1)
+			{
+				if(firstFree == -1)
+				{
+					firstFree = i;
+				}
+				else
+				{
+					nextFree = i;
+				}
+			}
+			if((nextFree - firstFree) >= 2)
+			{
+				hasExtFrag = true;
+				break;
+			}
+		}
+
+		int extFrag = 0;
+		if (hasExtFrag)
+		{
+			for(int i = 0; i < 4; i++)
+			{
+				if(memoryMap[i] == -1)
+				{
+					extFrag += 4096;
+				}
+			}
+		}
+		memoryStamp << "Total external fragmentation in KB: " << extFrag << std::endl;
+			
+		memoryStamp << "----end---- = 16384" << std::endl << std::endl;
+		for(int k = 4; k > 0; k--)
+		{
+			if(this->memoryMap[k - 1] != -1)
+			{
+				memoryStamp << k * 4096 << std::endl;
+				memoryStamp << "P" << this->memoryMap[k - 1] << std::endl;
+				memoryStamp << (k - 1) * 4096 << std::endl << std::endl;
+			}
+		}
+		memoryStamp << "----start---- = 0" << std::endl;
+		memoryStamp.close();*/
+	}
+	if(isTesting)
+	{
+		if(cpuCycle - previousBF == (configVars["batch-process-freq"]+1))
+		{
+			generateDummy(ConsoleManager::getInstance());
+			previousBF = cpuCycle;
+		}
+	}
+
 }
 
 void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int coreIndex)
 {
-	unsigned int previousCycle = cpuCycle;
 	unsigned int endLine;
 	if(runningProcess->totalLine <= runningProcess->currentLine + this->configVars["quantum-cycles"])
 		endLine = runningProcess->totalLine;
@@ -276,9 +298,8 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 		endLine = runningProcess->currentLine + this->configVars["quantum-cycles"];
 	for(int i = runningProcess->currentLine; i < endLine;)
 	{
-		if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
+		if(cpuCycle-previousQQ >= configVars["delay-per-exec"]+1)
 		{
-			previousCycle = cpuCycle;
 			runningProcess->coreUsed = coreIndex;
 			runningProcess->currentLine += 1;
 			runningProcess->lastExecuted = time(NULL);
@@ -346,6 +367,13 @@ std::string Scheduler::coreSummary()
 	int totalCount = this->configVars["num-cpu"];
 	int usedCounter = 0;
 	std::vector<int> dummyList = this->coreList;
+	/*std::vector<std::shared_ptr<Process>> tempQueue = readyQueue;
+	std::cout << "\n---READY QUEUE---\n";
+	for(std::shared_ptr<Process> i : tempQueue)
+	{
+		std::cout << i->name << std::endl;
+	}
+	std::cout << "\n---QUEUE END---\n";*/
 	for(auto i = dummyList.begin(); i != dummyList.end(); i++)
 	{
 		if((*i) != -1)
@@ -370,36 +398,16 @@ void Scheduler::varTest()
 
 void Scheduler::generateDummy(ConsoleManager* cmInstance)
 {
-	int prevCycle = cpuCycle;
-	while(isTesting)
-	{
-		if(cpuCycle-prevCycle >= (this->configVars["batch-process-freq"]+1))
-		{
-			mtx.lock();
-			std::string tempConsoleName = "Process_" + std::to_string(dummyCounter);
-			std::shared_ptr<BaseConsole> tempConsole = std::make_shared<BaseConsole>
-			(tempConsoleName);
-			this->registerProcess(tempConsole->getAttachedProcess());
-			cmInstance->registerDummy(tempConsole);
-			dummyCounter++;
-			prevCycle = cpuCycle;
-			mtx.unlock();
-		}
-		Sleep(100);
-	}
+	mtx.lock();
+	std::string tempConsoleName = "Process_" + std::to_string(dummyCounter);
+	std::shared_ptr<BaseConsole> tempConsole = std::make_shared<BaseConsole>
+		(tempConsoleName);
+	this->registerProcess(tempConsole->getAttachedProcess());
+	cmInstance->registerDummy(tempConsole);
+	dummyCounter++;
+	mtx.unlock();
 }
 
-void Scheduler::startTester()
-{
-	isTesting = true;
-	std::thread dummyGenerator(&Scheduler::generateDummy, sharedInstance, ConsoleManager::getInstance());
-	dummyGenerator.detach();
-}
-
-void Scheduler::stopTester()
-{
-	isTesting = false;
-}
 
 Scheduler::Scheduler()
 {

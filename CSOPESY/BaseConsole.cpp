@@ -1,5 +1,5 @@
 #include "BaseConsole.h"
-
+#include "InputHandler.h"
 #include "ConsoleManager.h"
 
 BaseConsole::BaseConsole(String processName) : AConsole(processName)
@@ -23,21 +23,30 @@ void BaseConsole::process()
 {
 	if(!(this->refreshed))
 	{
-		String command = "";
-		std::cout << "Enter command: ";
-		std::getline(std::cin, command);
-		if (command == "process-smi")
+		if(!promptShown)
 		{
-			this->printProcessInfo();
+			std::cout << "Enter command: ";
+			promptShown = true;
 		}
-		else if (command == "exit")
+		bool commandEntered = InputHandler::getInstance()->pollKeyboard(&command);
+		if(commandEntered)
 		{
-			ConsoleManager::getInstance()->returnToPreviousConsole();
+			if (command == "process-smi")
+			{
+				this->printProcessInfo();
+			}
+			else if (command == "exit")
+			{
+				ConsoleManager::getInstance()->returnToPreviousConsole();
+			}
+			else
+			{
+				std::cout << "Invalid Command. Try Again.";
+			}
+			promptShown = false;
+			command = "";
 		}
-		else
-		{
-			std::cout << "Invalid Command. Try Again.";
-		}
+		
 	}
 }
 

@@ -7,7 +7,7 @@
 #include "ConsoleManager.h"
 #include "Process.h"
 #include "BaseConsole.h"
-
+#include <thread>
 class Scheduler
 {
 public:
@@ -27,6 +27,9 @@ public:
 	int getMin();
 	int memoryMap[4];
 	std::vector<std::shared_ptr<Process>> readyQueue;
+	unsigned int previousQQ = 0;
+	unsigned int previousBF = 0;
+	bool isOn = false;
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;
@@ -38,4 +41,6 @@ private:
 	~Scheduler() = default;
 	Scheduler(Scheduler const&) {};
 	Scheduler& operator=(Scheduler const&) {};
+	std::vector<std::thread> cpuCores;
+	
 };

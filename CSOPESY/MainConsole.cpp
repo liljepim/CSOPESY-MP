@@ -1,5 +1,6 @@
 #include "MainConsole.h"
 #include "Scheduler.h"
+#include "InputHandler.h"
 #include <format>
 #include <string>
 #include <chrono>
@@ -120,96 +121,109 @@ void MainConsole::process()
 {
 	if(!(this->refreshed))
 	{
-		String command = "";
-		std::cout << "Enter Command: ";
-		std::getline(std::cin, command);
-		if(osInitialized)
+		if(!promptShown)
 		{
-			if (command == "clear")
+			std::cout << "Enter Command: ";
+			promptShown = true;
+		}
+		
+		bool commandEntered = InputHandler::getInstance()->pollKeyboard(&command);
+		if(commandEntered)
+		{
+			if (osInitialized)
 			{
-				system("cls");
-				printBanner();
-			}
-			else if (command.starts_with("screen -s "))
-			{
-				String tempName = "";
-				if (command.length() > 9)
+				if (command == "clear")
 				{
-					tempName.append(command, 10, command.length() - 9);
+					system("cls");
+					printBanner();
 				}
-				std::cout << "Creating process " << tempName << "..." << std::endl;
-				std::shared_ptr<BaseConsole> tempConsole = std::make_shared<BaseConsole>(tempName);
-				bool success = ConsoleManager::getInstance()->registerScreen(tempConsole);
-				if (success)
-					ConsoleManager::getInstance()->switchToScreen(tempName);
-				this->refreshed = false;
-				Scheduler::getInstance()->registerProcess((tempConsole->getAttachedProcess()));
-			}
-			else if (command.starts_with("screen -r "))
-			{
-				String tempName = "";
-				if (command.length() > 9)
+				else if (command.starts_with("screen -s "))
 				{
-					tempName.append(command, 10, command.length() - 9);
-				}
-
-				bool success = ConsoleManager::getInstance()->switchToScreen(tempName);
-				if (success)
+					String tempName = "";
+					if (command.length() > 9)
+					{
+						tempName.append(command, 10, command.length() - 9);
+					}
+					std::cout << "Creating process " << tempName << "..." << std::endl;
+					std::shared_ptr<BaseConsole> tempConsole = std::make_shared<BaseConsole>(tempName);
+					bool success = ConsoleManager::getInstance()->registerScreen(tempConsole);
+					if (success)
+						ConsoleManager::getInstance()->switchToScreen(tempName);
 					this->refreshed = false;
-			}
-			else if (command == "screen -ls")
-			{
-				processList();
-			}
-			else if (command == "scheduler-test")
-			{
-				if(!isTesting)
+					Scheduler::getInstance()->registerProcess((tempConsole->getAttachedProcess()));
+				}
+				else if (command.starts_with("screen -r "))
+				{
+					String tempName = "";
+					if (command.length() > 9)
+					{
+						tempName.append(command, 10, command.length() - 9);
+					}
+
+					bool success = ConsoleManager::getInstance()->switchToScreen(tempName);
+					if (success)
+						this->refreshed = false;
+				}
+				else if (command == "screen -ls")
+				{
+					processList();
+				}
+				else if (command == "scheduler-test")
+				{
 					Scheduler::getInstance()->startTester();
+				}
+				else if (command == "scheduler-stop")
+				{
+					Scheduler::getInstance()->stopTester();
+				}
+				else if (command == "show-cycle")
+				{
+					std::cout << cpuCycle << std::endl;
+					std::cout << Scheduler::getInstance()->previousBF << std::endl;
+					std::cout << Scheduler::getInstance()->previousQQ << std::endl;
+				}
+				else if (command == "report-util")
+				{
+					generateLog();
+				}
+				else if (command == "exit")
+				{
+					ConsoleManager::getInstance()->exitApplication();
+					return;
+				}
+				else
+				{
+					std::cout << "Command not recognized. Try again.\n";
+				}
 			}
-			else if (command == "scheduler-stop")
+			else if (!osInitialized)
 			{
-				Scheduler::getInstance()->stopTester();
+				if (command == "initialize")
+				{
+					osInitialized = true;
+					std::cout << "OS Initialized.\n";
+					Scheduler::getInstance()->readConfig();
+				}
+				else if (command == "exit")
+				{
+					ConsoleManager::getInstance()->exitApplication();
+					return;
+				}
+				else if (command == "show-cycle")
+				{
+					std::cout << cpuCycle << std::endl;
+					std::cout << Scheduler::getInstance()->previousBF << std::endl;
+					std::cout << Scheduler::getInstance()->previousQQ << std::endl;
+				}
+				else
+				{
+					std::cout << "Command not recognized. Try again.\n";
+				}
 			}
-			else if (command == "show-cycle")
-			{
-				std::cout << cpuCycle << std::endl;
-			}
-			else if (command == "report-util")
-			{
-				generateLog();
-			}
-			else if (command == "exit")
-			{
-				ConsoleManager::getInstance()->exitApplication();
-				return;
-			}
-			else
-			{
-				std::cout << "Command not recognized. Try again.\n";
-			}
+			promptShown = false;
+			command = "";
 		}
-		else if (!osInitialized)
-		{
-			if(command == "initialize")
-			{
-				osInitialized = true;
-				std::cout << "OS Initialized.\n";
-				Scheduler::getInstance()->readConfig();
-			}
-			else if (command == "exit")
-			{
-				ConsoleManager::getInstance()->exitApplication();
-				return;
-			}
-			else if (command == "show-cycle")
-			{
-				std::cout << cpuCycle << std::endl;
-			}
-			else
-			{
-				std::cout << "Command not recognized. Try again.\n";
-			}
-		}
+		
 		
 	}
 }

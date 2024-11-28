@@ -1,59 +1,53 @@
 #include <iostream>
 #include "ConsoleManager.h"
 #include "Scheduler.h"
+#include "InputHandler.h"
 #include <stdlib.h>
 #include <thread>
 #include <chrono>
 #include <ctime>
 #include <mutex>
 
+
+
 std::mutex mtx;
 
 typedef std::string String;
-
-
 
 bool osInitialized = false;
 bool isTesting = false;
 
 unsigned int cpuCycle = 0;
 
-
-void incrementCycle()
-{
-	while(ConsoleManager::getInstance()->isRunning())
-	{
-		if (osInitialized)
-		{
-			cpuCycle++;
-			std::this_thread::sleep_for(std::chrono::nanoseconds(1000));
-		}
-	}
-	
-}
-
 int
 main()
 {
 	ConsoleManager::initialize();
 	Scheduler::initialize();
-	std::thread cpuCycler(incrementCycle);
-	cpuCycler.detach();
+	InputHandler::initialize();
 	bool running = true;
 
 	while(running)
 	{
-		ConsoleManager::getInstance()->process();
 		ConsoleManager::getInstance()->drawConsole();
-
+		ConsoleManager::getInstance()->process();
 		running = ConsoleManager::getInstance()->isRunning();
+		if(osInitialized)
+		{
+			if(!Scheduler::getInstance()->isOn)
+			{
+				Scheduler::getInstance()->readConfig();
+			} else
+			{
+				Scheduler::getInstance()->assignProcesses();
+			}
+				
+
+		}
+		cpuCycle++;
 	}
 	
 	ConsoleManager::destroy();
 	Scheduler::destroy();
+	InputHandler::destroy();
 }
-
-//Time printing
-//std::chrono::time_point now = std::chrono::system_clock::now();
-//
-//std::cout << std::format("{:%m/%d/%y %X}", now);

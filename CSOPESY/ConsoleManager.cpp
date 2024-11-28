@@ -36,6 +36,11 @@ void ConsoleManager::drawConsole() const
 	}
 }
 
+void ConsoleManager::refreshConsole()
+{
+	this->currentConsole->onEnabled();
+}
+
 void ConsoleManager::process() const
 {
 	if(this->currentConsole != nullptr)
@@ -93,6 +98,12 @@ void ConsoleManager::returnToPreviousConsole()
 		
 	}
 }
+
+std::shared_ptr<AConsole> ConsoleManager::getCurrentConsole()
+{
+	return currentConsole;
+}
+
 
 bool ConsoleManager::switchToScreen(String consoleName)
 {

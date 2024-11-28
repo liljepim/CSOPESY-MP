@@ -40,7 +40,11 @@ public:
 
 	ConsoleTable* getConsoleTable();
 
+	std::shared_ptr<AConsole> getCurrentConsole();
+
 	void setCursorPosition(int posX, int posY) const;
+
+	void refreshConsole();
 private:
 	ConsoleManager();
 	~ConsoleManager() = default;

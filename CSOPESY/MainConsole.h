@@ -16,5 +16,7 @@ public:
 private:
 	bool refreshed = false;
 	bool initialized = true;
+	bool promptShown = false;
+	String command = "";
 };
 

@@ -14,4 +14,6 @@ private:
 	void printProcessInfo() const;
 	bool refreshed = false;
 	std::shared_ptr<Process> attachedProcess;
+	bool promptShown = false;
+	String command = "";
 };
