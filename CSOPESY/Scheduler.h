@@ -25,7 +25,6 @@ public:
 	void coreSummary();
 	int getMax();
 	int getMin();
-	int memoryMap[4];
 	std::vector<std::shared_ptr<Process>> readyQueue;
 	std::vector<std::shared_ptr<Process>> finishedProcesses;
 	unsigned int previousQQ = 0;
