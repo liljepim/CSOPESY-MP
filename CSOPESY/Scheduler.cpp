@@ -203,7 +203,6 @@ void Scheduler::assignProcesses()
 						cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
 					this->readyQueue.erase(this->readyQueue.begin());
 					cpuCores[i].detach();
-					std::cout << "PROCESS-ASSIGNED!" << std::endl;
 				}
 				else
 				{
@@ -291,6 +290,7 @@ void Scheduler::assignProcesses()
 
 void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int coreIndex)
 {
+	unsigned int previousCycle = cpuCycle;
 	unsigned int endLine;
 	if(runningProcess->totalLine <= runningProcess->currentLine + this->configVars["quantum-cycles"])
 		endLine = runningProcess->totalLine;
@@ -298,12 +298,14 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 		endLine = runningProcess->currentLine + this->configVars["quantum-cycles"];
 	for(int i = runningProcess->currentLine; i < endLine;)
 	{
-		if(cpuCycle-previousQQ >= configVars["delay-per-exec"]+1)
+		if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
 		{
 			runningProcess->coreUsed = coreIndex;
 			runningProcess->currentLine += 1;
 			runningProcess->lastExecuted = time(NULL);
+			previousCycle = cpuCycle;
 			i++;
+			
 		}
 	}
 	mtx.lock();
@@ -317,6 +319,7 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 		{
 			if(runningProcess->processId == this->memoryMap[i])
 			{
+				finishedProcesses.push_back(runningProcess);
 				this->memoryMap[i] = -1;
 				break;
 			}
@@ -362,32 +365,40 @@ void Scheduler::destroy()
 	delete sharedInstance;
 }
 
-std::string Scheduler::coreSummary()
+void Scheduler::coreSummary()
 {	
 	int totalCount = this->configVars["num-cpu"];
 	int usedCounter = 0;
-	std::vector<int> dummyList = this->coreList;
-	/*std::vector<std::shared_ptr<Process>> tempQueue = readyQueue;
-	std::cout << "\n---READY QUEUE---\n";
-	for(std::shared_ptr<Process> i : tempQueue)
+	std::vector<int> dummyList;
+	for(const int& i : this->coreList)
+	{
+		dummyList.push_back(i);
+		if(i != -1)
+		{
+			usedCounter += 1;
+		}
+	}
+
+	float cpuUtil = (usedCounter * 100.0f) / totalCount;
+	std::cout << "CPU utilization: " << cpuUtil << "%\n";
+	std::cout << "Cores used: " << usedCounter << std::endl;
+	std::cout << "Cored available: " << totalCount - usedCounter << std::endl;
+
+	std::cout << "\nRunning Processes:\n";
+	for(const int& i : dummyList)
+	{
+		std::cout << i << std::endl;
+	}
+
+	std::cout << "Finished Processes:\n";
+	for(std::shared_ptr<Process> i : finishedProcesses)
 	{
 		std::cout << i->name << std::endl;
 	}
-	std::cout << "\n---QUEUE END---\n";*/
-	for(auto i = dummyList.begin(); i != dummyList.end(); i++)
-	{
-		if((*i) != -1)
-		{
-			usedCounter++;
-		}
-	}
-	float percent = (usedCounter*100.0f) / totalCount;
-	int remainingCore = totalCount - usedCounter;
-	std::string summary = std::format("CPU Utilization: {0:.2f}%", percent);
-	summary += "\nCores Used: " + std::to_string(usedCounter) + "\n";
-	summary += "Cores Available: " + std::to_string(remainingCore);	
-	return summary;
-}
+
+	std::cout << std::endl;	
+	
+ }
 
 
 void Scheduler::varTest()
