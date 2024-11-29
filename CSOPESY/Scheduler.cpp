@@ -247,9 +247,9 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 	if(runningProcess->currentLine != runningProcess->totalLine)
 	{
 		this->readyQueue.push_back(runningProcess);
+		runningProcess->isRunning = false;
 		FlatMemoryAllocator::getInstance()->backingStore(runningProcess);
 	}
-		
 	else if(runningProcess->currentLine == runningProcess->totalLine)
 	{
 		FlatMemoryAllocator::getInstance()->deallocate(runningProcess);
@@ -281,7 +281,6 @@ void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int co
 	FlatMemoryAllocator::getInstance()->deallocate(runningProcess);
 	runningProcess->timeFinished = time(NULL);
 	this->finishedProcesses.push_back(runningProcess);
-	
 	mtx.unlock();
 	runningProcess->isRunning = false;
 }
