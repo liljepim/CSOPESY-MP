@@ -49,27 +49,20 @@ void FlatMemoryAllocator::allocate(std::shared_ptr<Process> newProcess)
 
 bool FlatMemoryAllocator::canAllocate(std::shared_ptr<Process> newProcess, int *finalIndexPtr)
 {
-	int emptySpaceCount;
+	int emptySpaceCount = 0;
 	bool canAllocate = false;
 	int finalIndex = -1;
-	//std::cout << maxOverallMem << std::endl;
-	for(int i = 0; i < maxOverallMem - newProcess->requiredMem + 1; i++)
+	for(int i = 0; i < maxOverallMem; i++)
 	{
-		emptySpaceCount = 0;
-		for(int j = i; j < i + newProcess->requiredMem; j++)
-		{
-			if(memoryMap[j] == nullptr)
-			{
-				emptySpaceCount++;
-			}
-			//std::cout << memoryMap[j] << std::endl;
-		}
+		if(memoryMap[i] != nullptr)
+			emptySpaceCount = 0;
+		else
+			emptySpaceCount += 1;
 		if(emptySpaceCount == newProcess->requiredMem)
 		{
 			canAllocate = true;
-			finalIndex = i;
-			*finalIndexPtr = finalIndex;
-			return canAllocate;
+			finalIndex = i - newProcess->requiredMem + 1;
+			break;
 		}
 	}
 	*finalIndexPtr = finalIndex;
