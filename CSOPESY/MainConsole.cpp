@@ -110,6 +110,10 @@ void MainConsole::process()
 				{
 					Scheduler::getInstance()->generateSMI();
 				}
+				else if (command == "vmstat")
+				{
+					Scheduler::getInstance()->genstat();
+				}
 				else if (command == "exit")
 				{
 					ConsoleManager::getInstance()->exitApplication();

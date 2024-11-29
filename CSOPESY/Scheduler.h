@@ -38,7 +38,10 @@ public:
 	void generateSMI();
 	int powMin;
 	int powMax;
+	void genstat();
 
+	int idleticks;
+	int activeticks;
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;
@@ -51,4 +54,5 @@ private:
 	Scheduler& operator=(Scheduler const&) {};
 	std::vector<std::thread> cpuCores;
 	std::string prevSummary;
+
 };

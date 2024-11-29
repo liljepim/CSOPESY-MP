@@ -20,6 +20,7 @@ public:
 	std::vector<std::shared_ptr<Process>> memoryMap;
 	std::vector<std::shared_ptr<Process>> processesStored;
 	void generateSummary();
+	void genstat();
 private:
 	static FlatMemoryAllocator* sharedInstance;
 	FlatMemoryAllocator();

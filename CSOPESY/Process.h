@@ -20,6 +20,7 @@ public:
 	int memIndex;
 	int cycleAssigned;
 	bool isRunning;
+	int requiredFrames;
 private:
 	static int totalCount;
 };

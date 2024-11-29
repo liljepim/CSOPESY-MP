@@ -13,6 +13,8 @@ Process::Process(String processName)
 	std::uniform_int_distribution<> distrib(Scheduler::getInstance()->getMin(), Scheduler::getInstance()->getMax());
 	std::uniform_int_distribution<> distribMem(Scheduler::getInstance()->getMemMin(), Scheduler::getInstance()->getMemMax());
 
+	int memperf = Scheduler::getInstance()->configVars["mem-per-frame"];
+
 	this->name = processName;
 	this->processId = Process::totalCount;
 	this->totalCount++;
@@ -23,6 +25,7 @@ Process::Process(String processName)
 	this->memIndex = -1;
 	this->cycleAssigned = -1;
 	this->isRunning = false;
+	this->requiredFrames = (requiredMem / memperf) + (requiredMem % memperf != 0);
 }
 
 void Process::processBody(){

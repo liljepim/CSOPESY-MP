@@ -138,7 +138,6 @@ void Scheduler::readConfig()
 		std::cout << it->first << " : " << it->second << std::endl;
 	}
 
-	
 }
 
 void Scheduler::registerProcess(std::shared_ptr<Process> newProcess)
@@ -169,6 +168,13 @@ void Scheduler::assignProcesses()
 		previousBF = cpuCycle;
 	}
 	mtx.lock();
+	for(int i = 0; i < this->configVars["num-cpu"]; i++)
+	{
+		if(this->coreList[i] == -1)
+		{
+			idleticks += 1;
+		}
+	}
 	for(int i = 0; i < this->configVars["num-cpu"]; i++)
 	{
 		if(this->coreList[i] == -1 && !readyQueue.empty())
@@ -228,6 +234,9 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 			runningProcess->currentLine += 1;
 			runningProcess->lastExecuted = time(NULL);
 			previousCycle = cpuCycle;
+			mtx.lock();
+			Scheduler::getInstance()->activeticks += 1;
+			mtx.unlock();
 			i++;
 			
 		}
@@ -243,9 +252,9 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 		
 	else if(runningProcess->currentLine == runningProcess->totalLine)
 	{
-		finishedProcesses.push_back(runningProcess);
 		FlatMemoryAllocator::getInstance()->deallocate(runningProcess);
 		this->finishedProcesses.push_back(runningProcess);
+		runningProcess->timeFinished = time(NULL);
 	}
 	mtx.unlock();
 	runningProcess->isRunning = false;
@@ -270,7 +279,9 @@ void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int co
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
 	FlatMemoryAllocator::getInstance()->deallocate(runningProcess);
+	runningProcess->timeFinished = time(NULL);
 	this->finishedProcesses.push_back(runningProcess);
+	
 	mtx.unlock();
 	runningProcess->isRunning = false;
 }
@@ -328,8 +339,10 @@ void Scheduler::coreSummary()
 		if(i != -1)
 		{
 			std::shared_ptr<Process> tempProc = ConsoleManager::getInstance()->findConsole(i);
-			/*buffer << tempHolder->getName() << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempHolder->getAttachedProcess()->lastExecuted))) << "\tCore:" << tempHolder->getAttachedProcess()->coreUsed << "\t" << tempHolder->getAttachedProcess()->currentLine << "/" << tempHolder->getAttachedProcess()->totalLine << std::endl;*/
-			buffer << tempProc->name << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempProc->lastExecuted))) << "\tCore:" << tempProc->coreUsed << "\t" << tempProc->currentLine << "/" << tempProc->totalLine << std::endl;
+			if (tempProc->coreUsed != -1)
+			{
+				buffer << tempProc->name << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempProc->lastExecuted))) << "\tCore:" << tempProc->coreUsed << "\t" << tempProc->currentLine << "/" << tempProc->totalLine << std::endl;
+			}
 		}
 	}
 
@@ -381,7 +394,7 @@ void Scheduler::generateSMI()
 
 	float cpuUtil = (usedCounter * 100.0f) / totalCount;
 	std::cout << "\n---------------------------------------------------------\n";
-	std::cout << "|	     PROCESS-SMI V1.0.0 Driver Version 01.00        |";
+	std::cout << "|	     PROCESS-SMI V1.0.0 Driver Version 01.00      |";
 	std::cout << "\n---------------------------------------------------------\n";
 	std::cout << "CPU-Util: " << cpuUtil << "%\n";
 	FlatMemoryAllocator::getInstance()->generateSummary();
@@ -393,6 +406,25 @@ void Scheduler::varTest()
 {
 	for (auto it = this->configVars.begin(); it != this->configVars.end(); it++) 
         std::cout << "Key: " << it->first << ", Value: " << it->second << std::endl;
+}
+
+void Scheduler::genstat()
+{
+	/*
+	 *TOTAL MEMORY
+	 *USED MEMORY
+	 *FREE MEMORY
+	 *IDLE CPU TICK
+	 *ACTIVE CPU TICKS
+	 *NUM PAGED IN
+	 *NUM PAGED OUT
+	 */
+
+	std::cout << "\n=============VMSTAT=============\n";
+	FlatMemoryAllocator::getInstance()->genstat();
+	std::cout << "Idle CPU Ticks : " << this->idleticks << std::endl;
+	std::cout << "Active CPU Ticks : " << this->activeticks << std::endl;
+	std::cout << "Total CPU Ticks : " << this->idleticks + this->activeticks << std::endl;
 }
 
 void Scheduler::generateDummy(ConsoleManager* cmInstance)
@@ -412,4 +444,6 @@ Scheduler::Scheduler()
 {
 	//initialize the scheduler
 	prevSummary = "";
+	int idleTicks = 0;
+	int activeTicks = 0;
 }

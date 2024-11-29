@@ -69,6 +69,13 @@ bool FlatMemoryAllocator::canAllocate(std::shared_ptr<Process> newProcess, int *
 	return canAllocate;
 }
 
+void FlatMemoryAllocator::genstat()
+{
+	std::cout << "\nTotal Memory : " << this->maxOverallMem << " KB\n";
+	std::cout << "Used Memory : " << this->occupiedMem << " KB\n";
+	std::cout << "Free Memory : " << this->availableMem << " KB\n";
+}
+
 //dealloc
 void FlatMemoryAllocator::deallocate(std::shared_ptr<Process> newProcess)
 {
