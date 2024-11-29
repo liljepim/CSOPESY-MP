@@ -10,8 +10,8 @@ public:
 	static void initialize();
 	static void destroy();
 	void pageIn(std::shared_ptr<Process> newProcess);
-	void pageOut(std::shared_ptr<Process> newProcess):
-	void backingStore(std::shared_ptr<Process> newProcess);
+	void pageOut(std::shared_ptr<Process> newProcess);
+	void storeOldest();
 	std::vector<int> canAllocate(std::shared_ptr<Process> newProcess);
 	std::vector<std::shared_ptr<Process>> memoryMap;
 	std::vector<int> freeFrames;

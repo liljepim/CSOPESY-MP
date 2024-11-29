@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <random>
+#include <fstream>
 #include "Process.h"
 #include "Scheduler.h"
 #include "PagingAllocator.h"
@@ -37,6 +38,7 @@ void PagingAllocator::pageIn(std::shared_ptr<Process> newProcess)
 		{
 			memoryMap[freeIndices[i]] = newProcess;
 			newProcess->assignedFrames.push_back(freeIndices[i]);
+			newProcess->cycleAssigned = cpuCycle;
 		}
 	}
 }
@@ -74,7 +76,37 @@ void PagingAllocator::pageOut(std::shared_ptr<Process> newProcess)
 	}
 }
 
-
+void PagingAllocator::storeOldest()
+{
+	//find oldest in memory
+	std::shared_ptr<Process> oldestPointer = nullptr;
+	for(int i = 0; i < memoryMap.size(); i++)
+	{
+		if(memoryMap[i] != nullptr)
+		{
+			if(oldestPointer == nullptr)
+				oldestPointer = memoryMap[i];
+			else if(oldestPointer != nullptr && memoryMap[i]->cycleAssigned < oldestPointer->cycleAssigned)
+				oldestPointer = memoryMap[i];
+		}
+	}
+	//page out
+	PagingAllocator::pageOut(oldestPointer);
+	//storefile
+	String subfolder = "backing_store";
+	std::ofstream storeFile;
+	storeFile.open(subfolder + '/' + std::to_string(newProcess->processId) + ".txt");
+	storeFile << newProcess->timeCreated << std::endl;
+	storeFile << newProcess->lastExecuted << std::endl;
+	storeFile << newProcess->timeFinished << std::endl;
+	storeFile << newProcess->coreUsed << std::endl;
+	storeFile << newProcess->requiredMem << std::endl;
+	storeFile << newProcess->requiredFrames << std::endl;
+	storeFile << newProcess->memIndex << std::endl;
+	storeFile << newProcess->cycleAssigned << std::endl;
+	storeFile << newProcess->isRunning << std::endl;
+	storeFile.close();
+}
 
 PagingAllocator::PagingAllocator()
 {

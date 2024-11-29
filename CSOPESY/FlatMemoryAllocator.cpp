@@ -124,6 +124,7 @@ void FlatMemoryAllocator::backingStore(std::shared_ptr<Process> newProcess)
 	storeFile << newProcess->timeFinished << std::endl;
 	storeFile << newProcess->coreUsed << std::endl;
 	storeFile << newProcess->requiredMem << std::endl;
+	storeFile << newProcess->requiredFrames << std::endl;
 	storeFile << newProcess->memIndex << std::endl;
 	storeFile << newProcess->cycleAssigned << std::endl;
 	storeFile << newProcess->isRunning << std::endl;
