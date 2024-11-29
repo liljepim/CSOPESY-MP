@@ -95,16 +95,16 @@ void PagingAllocator::storeOldest()
 	//storefile
 	String subfolder = "backing_store";
 	std::ofstream storeFile;
-	storeFile.open(subfolder + '/' + std::to_string(newProcess->processId) + ".txt");
-	storeFile << newProcess->timeCreated << std::endl;
-	storeFile << newProcess->lastExecuted << std::endl;
-	storeFile << newProcess->timeFinished << std::endl;
-	storeFile << newProcess->coreUsed << std::endl;
-	storeFile << newProcess->requiredMem << std::endl;
-	storeFile << newProcess->requiredFrames << std::endl;
-	storeFile << newProcess->memIndex << std::endl;
-	storeFile << newProcess->cycleAssigned << std::endl;
-	storeFile << newProcess->isRunning << std::endl;
+	storeFile.open(subfolder + '/' + std::to_string(oldestPointer->processId) + ".txt");
+	storeFile << oldestPointer->timeCreated << std::endl;
+	storeFile << oldestPointer->lastExecuted << std::endl;
+	storeFile << oldestPointer->timeFinished << std::endl;
+	storeFile << oldestPointer->coreUsed << std::endl;
+	storeFile << oldestPointer->requiredMem << std::endl;
+	storeFile << oldestPointer->requiredFrames << std::endl;
+	storeFile << oldestPointer->memIndex << std::endl;
+	storeFile << oldestPointer->cycleAssigned << std::endl;
+	storeFile << oldestPointer->isRunning << std::endl;
 	storeFile.close();
 }
 
