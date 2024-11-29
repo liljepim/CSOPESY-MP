@@ -1,11 +1,12 @@
-CPU Utilization: 100.00%
-Cores Used: 4
-Cores Available: 0
+CPU utilization: 6.25%
+Cores used: 1
+Cored available: 15
 
-Running processes:
-Process_6	(11/04/2024 06:29:35 PM)	Core:0	40/1810
-Process_7	(11/04/2024 06:29:35 PM)	Core:3	40/1552
-Process_30	(11/04/2024 06:29:35 PM)	Core:1	9/1587
-Process_31	(11/04/2024 06:29:35 PM)	Core:2	7/1663
+------------------------------------------------------------------
 
-Finished processes:
+Running Processes:
+Process_0	(11/29/2024 11:53:34 AM)	Core:0	616/1760
+
+Finished Processes:
+
+------------------------------------------------------------------

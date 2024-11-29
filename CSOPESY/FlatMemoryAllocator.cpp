@@ -8,8 +8,10 @@
 #include "Scheduler.h"
 #include "ConsoleManager.h"
 #include <fstream>
+#include <mutex>
 
 extern unsigned int cpuCycle;
+extern std::mutex mtx;
 
 FlatMemoryAllocator* FlatMemoryAllocator::sharedInstance = nullptr;
 
@@ -40,6 +42,8 @@ void FlatMemoryAllocator::allocate(std::shared_ptr<Process> newProcess)
 		newProcess->memIndex = finalIndex;
 		newProcess->cycleAssigned = cpuCycle;
 		processesStored.push_back(newProcess);
+		availableMem -= newProcess->requiredMem;
+		occupiedMem += newProcess->requiredMem;
 	}
 }
 
@@ -82,10 +86,32 @@ void FlatMemoryAllocator::deallocate(std::shared_ptr<Process> newProcess)
 		if(processesStored[i] == newProcess)
 		{
 			processesStored.erase(processesStored.begin() + i);
+			availableMem += newProcess->requiredMem;
+			occupiedMem -= newProcess->requiredMem;
 			break;
 		}
 	}
+
 }
+
+void FlatMemoryAllocator::generateSummary()
+{
+	std::cout << "Memory Usage: " << this->occupiedMem << " / " << this->maxOverallMem;
+	std::cout << "\nMemory Util: " << ((this->occupiedMem * 100.f) / this->maxOverallMem) << "%\n";
+	std::cout << "\n";
+	std::cout << "\n=========================================================\n";
+	std::cout << "Running processes and memory usage:";
+	std::cout << "\n---------------------------------------------------------\n";
+	for(auto i : processesStored)
+	{
+		if(i->isRunning)
+		{
+			std::cout << i->name << " " << i->requiredMem << " KB " << std::endl;
+		}
+	}
+	std::cout << "\n---------------------------------------------------------\n";
+}
+
 
 void FlatMemoryAllocator::backingStore(std::shared_ptr<Process> newProcess)
 {

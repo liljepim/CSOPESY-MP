@@ -104,6 +104,22 @@ std::shared_ptr<AConsole> ConsoleManager::getCurrentConsole()
 	return currentConsole;
 }
 
+std::shared_ptr<Process> ConsoleManager::findConsole(int pid)
+{
+	for(auto i : consoleTable)
+	{
+		if(i.first != "MAIN_CONSOLE")
+		{
+			std::shared_ptr<Process> tempProc = std::dynamic_pointer_cast<BaseConsole>(i.second)->getAttachedProcess();
+			if(tempProc->processId == pid)
+			{
+				return tempProc;
+			}
+		}
+	}
+	return nullptr;
+}
+
 
 bool ConsoleManager::switchToScreen(String consoleName)
 {

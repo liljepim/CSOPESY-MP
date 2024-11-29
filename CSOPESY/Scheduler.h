@@ -33,6 +33,9 @@ public:
 	unsigned int previousQQ = 0;
 	unsigned int previousBF = 0;
 	bool isOn = false;
+	void saveSummary();
+	void getCpuUtil();
+	void generateSMI();
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;
@@ -44,5 +47,5 @@ private:
 	Scheduler(Scheduler const&) {};
 	Scheduler& operator=(Scheduler const&) {};
 	std::vector<std::thread> cpuCores;
-	
+	std::string prevSummary;
 };

@@ -19,6 +19,7 @@ public:
 	void backingStore(std::shared_ptr<Process> newProcess);
 	std::vector<std::shared_ptr<Process>> memoryMap;
 	std::vector<std::shared_ptr<Process>> processesStored;
+	void generateSummary();
 private:
 	static FlatMemoryAllocator* sharedInstance;
 	FlatMemoryAllocator();

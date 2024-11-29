@@ -42,6 +42,8 @@ public:
 
 	std::shared_ptr<AConsole> getCurrentConsole();
 
+	std::shared_ptr<Process> findConsole(int pid);
+
 	void setCursorPosition(int posX, int posY) const;
 
 	void refreshConsole();

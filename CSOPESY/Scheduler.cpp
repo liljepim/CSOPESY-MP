@@ -10,6 +10,7 @@
 #include <mutex>
 #include <format>
 #include <chrono>
+#include <filesystem>
 
 extern unsigned int cpuCycle;
 extern bool isTesting;
@@ -235,10 +236,17 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
 	if(runningProcess->currentLine != runningProcess->totalLine)
+	{
 		this->readyQueue.push_back(runningProcess);
+		FlatMemoryAllocator::getInstance()->backingStore(runningProcess);
+	}
+		
 	else if(runningProcess->currentLine == runningProcess->totalLine)
+	{
 		finishedProcesses.push_back(runningProcess);
-	FlatMemoryAllocator::getInstance()->backingStore(runningProcess);
+		FlatMemoryAllocator::getInstance()->deallocate(runningProcess);
+		this->finishedProcesses.push_back(runningProcess);
+	}
 	mtx.unlock();
 	runningProcess->isRunning = false;
 }
@@ -261,6 +269,8 @@ void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int co
 	mtx.lock();
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
+	FlatMemoryAllocator::getInstance()->deallocate(runningProcess);
+	this->finishedProcesses.push_back(runningProcess);
 	mtx.unlock();
 	runningProcess->isRunning = false;
 }
@@ -291,7 +301,8 @@ void Scheduler::destroy()
 }
 
 void Scheduler::coreSummary()
-{	
+{
+	mtx.lock();
 	int totalCount = this->configVars["num-cpu"];
 	int usedCounter = 0;
 	std::vector<int> dummyList;
@@ -305,25 +316,78 @@ void Scheduler::coreSummary()
 	}
 
 	float cpuUtil = (usedCounter * 100.0f) / totalCount;
-	std::cout << "CPU utilization: " << cpuUtil << "%\n";
-	std::cout << "Cores used: " << usedCounter << std::endl;
-	std::cout << "Cored available: " << totalCount - usedCounter << std::endl;
+	std::stringstream buffer;
+	buffer << "CPU utilization: " << cpuUtil << "%\n";
+	buffer << "Cores used: " << usedCounter << std::endl;
+	buffer << "Cored available: " << totalCount - usedCounter << std::endl;
 
-	std::cout << "\nRunning Processes:\n";
-	for(const int& i : dummyList)
+	buffer << "\n------------------------------------------------------------------\n";
+	buffer << "\nRunning Processes:\n";
+	for(auto i : dummyList)
 	{
-		std::cout << i << std::endl;
+		if(i != -1)
+		{
+			std::shared_ptr<Process> tempProc = ConsoleManager::getInstance()->findConsole(i);
+			/*buffer << tempHolder->getName() << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempHolder->getAttachedProcess()->lastExecuted))) << "\tCore:" << tempHolder->getAttachedProcess()->coreUsed << "\t" << tempHolder->getAttachedProcess()->currentLine << "/" << tempHolder->getAttachedProcess()->totalLine << std::endl;*/
+			buffer << tempProc->name << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempProc->lastExecuted))) << "\tCore:" << tempProc->coreUsed << "\t" << tempProc->currentLine << "/" << tempProc->totalLine << std::endl;
+		}
 	}
 
-	std::cout << "Finished Processes:\n";
-	for(std::shared_ptr<Process> i : finishedProcesses)
+	buffer << "\nFinished Processes:\n";
+	for(auto tempProc : finishedProcesses)
 	{
-		std::cout << i->name << std::endl;
+		buffer << tempProc->name << "\t" << std::format("({:%m/%d/%Y %r})", std::chrono::current_zone()->to_local(std::chrono::system_clock::from_time_t(tempProc->timeFinished))) << "\t" << "Finished" << "\t" << tempProc->currentLine << "/" << tempProc->totalLine << std::endl;
 	}
+	buffer << "\n------------------------------------------------------------------\n";
+	std::cout << buffer.str();
+	if(!prevSummary.empty())
+	{
+		prevSummary.clear();
+	}
+	prevSummary = buffer.str();
 
-	std::cout << std::endl;	
-	
+	mtx.unlock();
  }
+
+void Scheduler::saveSummary()
+{
+	if(!prevSummary.empty())
+	{
+		std::ofstream log("csopesy-log.txt");
+		log << prevSummary;
+		log.close();
+		std::cout << "Report generated at " << std::filesystem::current_path() << "\\csopesy-log.txt" << std::endl;
+	}
+	else
+	{
+		std::cout << "Summary not yet generated. Use command screen -ls to generate summary." << std::endl;
+	}
+}
+
+void Scheduler::generateSMI()
+{
+	mtx.lock();
+	int totalCount = this->configVars["num-cpu"];
+	int usedCounter = 0;
+	std::vector<int> dummyList;
+	for (const int& i : this->coreList)
+	{
+		dummyList.push_back(i);
+		if (i != -1)
+		{
+			usedCounter += 1;
+		}
+	}
+
+	float cpuUtil = (usedCounter * 100.0f) / totalCount;
+	
+	std::cout << "\n---------------------------------------------------------\n";
+	std::cout << "|	     PROCESS-SMI V1.0.0 Driver Version 01.00        |";
+	std::cout << "\n---------------------------------------------------------\n";
+	std::cout << "CPU-Util: " << cpuUtil << "%\n";
+	FlatMemoryAllocator::getInstance()->generateSummary();
+	mtx.unlock();
+}
 
 
 void Scheduler::varTest()
@@ -348,4 +412,5 @@ void Scheduler::generateDummy(ConsoleManager* cmInstance)
 Scheduler::Scheduler()
 {
 	//initialize the scheduler
+	prevSummary = "";
 }
