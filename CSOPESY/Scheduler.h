@@ -20,6 +20,9 @@ public:
 	void assignProcesses();
 	void runProcessesRR(std::shared_ptr<Process> runningProcess, int coreIndex);
 	void runProcessesFCFS(std::shared_ptr<Process> runningProcess, int coreIndex);
+	void assignProcesses_Paging();
+	void runProcessesRR_Paging(std::shared_ptr<Process> runningProcess, int coreIndex);
+	void runProcessesFCFS_Paging(std::shared_ptr<Process> runningProcess, int coreIndex);
 	void startTester();
 	void stopTester();
 	void coreSummary();
@@ -39,7 +42,7 @@ public:
 	int powMin;
 	int powMax;
 	void genstat();
-
+	bool isPaging;
 	int idleticks;
 	int activeticks;
 private:

@@ -1,5 +1,6 @@
 #include "Scheduler.h"
 #include "FlatMemoryAllocator.h"
+#include "PagingAllocator.h"
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -199,7 +200,6 @@ void Scheduler::assignProcesses()
 					this->readyQueue.push_back(this->readyQueue.front());
 					this->readyQueue.erase(this->readyQueue.begin());
 				}
-				//else swap
 			}
 		}
 	}
@@ -214,7 +214,68 @@ void Scheduler::assignProcesses()
 			previousBF = cpuCycle;
 		}
 	}
+}
 
+void Scheduler::assignProcesses_Paging()
+{
+	if(previousQQ == 0)
+	{
+		previousQQ = cpuCycle;
+	}
+	if(previousBF == 0)
+	{
+		previousBF = cpuCycle;
+	}
+	mtx.lock();
+	for(int i = 0; i < this->configVars["num-cpu"]; i++)
+	{
+		if(this->coreList[i] == -1)
+		{
+			idleticks += 1;
+		}
+	}
+	for(int i = 0; i < this->configVars["num-cpu"]; i++)
+	{
+		if(this->coreList[i] == -1 && !readyQueue.empty())
+		{
+			int finalIndex;
+			//bool canAllocate = FlatMemoryAllocator::getInstance()->canAllocate(this->readyQueue.front(), &finalIndex);
+			std::vector<int> freeIndices = PagingAllocator::getInstance()->canAllocate(this->readyQueue.front());
+			if(freeIndices.size() == this->readyQueue.front()->requiredFrames)
+			{
+				this->coreList[i] = this->readyQueue.front()->processId;
+				//FlatMemoryAllocator::getInstance()->allocate(this->readyQueue.front());
+				PagingAllocator::getInstance()->pageIn(this->readyQueue.front());
+				if(this->scheduler == "\"rr\"")
+					cpuCores[i] = std::thread(&Scheduler::runProcessesRR_Paging, sharedInstance, this->readyQueue.front(), i);
+				else if(this->scheduler == "\"fcfs\"")
+					cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS_Paging, sharedInstance, this->readyQueue.front(), i);
+				this->readyQueue.erase(this->readyQueue.begin());
+				cpuCores[i].detach();
+			}
+			else
+			{
+				//replace with backing store funcs
+				if(this->scheduler == "\"rr\"")
+				{
+					this->readyQueue.push_back(this->readyQueue.front());
+					this->readyQueue.erase(this->readyQueue.begin());
+					PagingAllocator::getInstance()->storeOldest();
+				}
+			}
+		}
+	}
+	mtx.unlock();
+	if(cpuCycle-previousQQ == (configVars["quantum-cycles"]+1))
+		previousQQ = cpuCycle;
+	if(isTesting)
+	{
+		if(cpuCycle - previousBF == (configVars["batch-process-freq"]+1))
+		{
+			generateDummy(ConsoleManager::getInstance());
+			previousBF = cpuCycle;
+		}
+	}
 }
 
 void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int coreIndex)
@@ -260,6 +321,51 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 	runningProcess->isRunning = false;
 }
 
+void Scheduler::runProcessesRR_Paging(std::shared_ptr<Process> runningProcess, int coreIndex)
+{
+	runningProcess->isRunning = true;
+	unsigned int previousCycle = cpuCycle;
+	unsigned int endLine;
+	if(runningProcess->totalLine <= runningProcess->currentLine + this->configVars["quantum-cycles"])
+		endLine = runningProcess->totalLine;
+	else
+		endLine = runningProcess->currentLine + this->configVars["quantum-cycles"];
+	for(int i = runningProcess->currentLine; i < endLine;)
+	{
+		if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
+		{
+			runningProcess->coreUsed = coreIndex;
+			runningProcess->currentLine += 1;
+			runningProcess->lastExecuted = time(NULL);
+			previousCycle = cpuCycle;
+			mtx.lock();
+			Scheduler::getInstance()->activeticks += 1;
+			mtx.unlock();
+			i++;
+			
+		}
+	}
+	mtx.lock();
+	runningProcess->coreUsed = -1;
+	this->coreList[coreIndex] = -1;
+	if(runningProcess->currentLine != runningProcess->totalLine)
+	{
+		this->readyQueue.push_back(runningProcess);
+		runningProcess->isRunning = false;
+		//FlatMemoryAllocator::getInstance()->backingStore(runningProcess);
+		PagingAllocator::getInstance()->pageOut(runningProcess);
+	}
+	else if(runningProcess->currentLine == runningProcess->totalLine)
+	{
+		//FlatMemoryAllocator::getInstance()->deallocate(runningProcess);
+		PagingAllocator::getInstance()->pageOut(runningProcess);
+		this->finishedProcesses.push_back(runningProcess);
+		runningProcess->timeFinished = time(NULL);
+	}
+	mtx.unlock();
+	runningProcess->isRunning = false;
+}
+
 void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int coreIndex)
 {
 	runningProcess->isRunning = true;
@@ -279,6 +385,32 @@ void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int co
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
 	FlatMemoryAllocator::getInstance()->deallocate(runningProcess);
+	runningProcess->timeFinished = time(NULL);
+	this->finishedProcesses.push_back(runningProcess);
+	mtx.unlock();
+	runningProcess->isRunning = false;
+}
+
+void Scheduler::runProcessesFCFS_Paging(std::shared_ptr<Process> runningProcess, int coreIndex)
+{
+	runningProcess->isRunning = true;
+	unsigned int previousCycle = cpuCycle;
+	for(int i = runningProcess->currentLine; i < runningProcess->totalLine;)
+	{
+		if(cpuCycle-previousCycle >= configVars["delay-per-exec"]+1)
+		{
+			previousCycle = cpuCycle;
+			runningProcess->coreUsed = coreIndex;
+			runningProcess->currentLine += 1;
+			runningProcess->lastExecuted = time(NULL);
+			i++;
+		}
+	}
+	mtx.lock();
+	runningProcess->coreUsed = -1;
+	this->coreList[coreIndex] = -1;
+	//FlatMemoryAllocator::getInstance()->deallocate(runningProcess);
+	PagingAllocator::getInstance()->pageOut(runningProcess);
 	runningProcess->timeFinished = time(NULL);
 	this->finishedProcesses.push_back(runningProcess);
 	mtx.unlock();
@@ -445,4 +577,8 @@ Scheduler::Scheduler()
 	prevSummary = "";
 	int idleTicks = 0;
 	int activeTicks = 0;
+	if(configVars["max-overall-mem"] == configVars["mem-per-frame"])
+		isPaging = false;
+	else
+		isPaging = true;
 }
