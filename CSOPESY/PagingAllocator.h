@@ -15,6 +15,13 @@ public:
 	std::vector<int> canAllocate(std::shared_ptr<Process> newProcess);
 	std::vector<std::shared_ptr<Process>> memoryMap;
 	std::vector<int> freeFrames;
+	void generateSummary();
+	void genstat();
+	int cellCount = 0;
+	int totalMem;
+	int occupiedMem;
+	int availableMem;
+	int memperf;
 private:
 	static PagingAllocator* sharedInstance;
 	PagingAllocator();

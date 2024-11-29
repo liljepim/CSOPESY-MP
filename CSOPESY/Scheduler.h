@@ -45,6 +45,8 @@ public:
 	bool isPaging;
 	int idleticks;
 	int activeticks;
+	int numPagein;
+	int numPageout;
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;

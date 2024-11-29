@@ -120,7 +120,13 @@ void Scheduler::readConfig()
 		//std::cout << varName << std::endl;
 		varValue = line.substr(spacePos + 1, line.size());
 		if(varName.compare("scheduler") != 0)
-			this->configVars.insert({varName, std::stoi(varValue)});
+		{
+			if (this->configVars.find(varName) == configVars.end())
+				this->configVars.insert({ varName, std::stoi(varValue) });
+			else
+				this->configVars[varName] = std::stoi(varValue);
+		}
+			
 		else
 			this->scheduler = varValue;
 	}
@@ -129,7 +135,18 @@ void Scheduler::readConfig()
 	for (int i = 0; i < this->configVars["num-cpu"]; i++)
 		cpuCores.push_back(std::thread());
 
-	FlatMemoryAllocator::initialize();
+	if (configVars["max-overall-mem"] == configVars["mem-per-frame"])
+	{
+		isPaging = false;
+		FlatMemoryAllocator::initialize();
+	}
+
+	else
+	{
+		isPaging = true;
+		PagingAllocator::initialize();
+	}
+	
 	isOn = true;
 	
 	std::map<String, int>::iterator it;
@@ -137,6 +154,16 @@ void Scheduler::readConfig()
 	for(it = this->configVars.begin(); it != configVars.end(); it++)
 	{
 		std::cout << it->first << " : " << it->second << std::endl;
+	}
+
+	
+		
+	if(isPaging)
+	{
+		std::cout << "Memory Management Scheme : Paging Allocator\n";
+	} else
+	{
+		std::cout << "Memory Management Scheme : Flat Memory Allocator\n";
 	}
 	this->powMin = static_cast<int>(log2(this->configVars["min-mem-per-proc"]));
 	this->powMax = static_cast<int>(log2(this->configVars["max-mem-per-proc"]));
@@ -529,7 +556,14 @@ void Scheduler::generateSMI()
 	std::cout << "|	     PROCESS-SMI V1.0.0 Driver Version 01.00      |";
 	std::cout << "\n---------------------------------------------------------\n";
 	std::cout << "CPU-Util: " << cpuUtil << "%\n";
-	FlatMemoryAllocator::getInstance()->generateSummary();
+	if(isPaging)
+	{
+		PagingAllocator::getInstance()->generateSummary();
+	}
+	else
+	{
+		FlatMemoryAllocator::getInstance()->generateSummary();
+	}
 	mtx.unlock();
 }
 
@@ -553,10 +587,16 @@ void Scheduler::genstat()
 	 */
 
 	std::cout << "\n=============VMSTAT=============\n";
-	FlatMemoryAllocator::getInstance()->genstat();
+	if (isPaging)
+		PagingAllocator::getInstance()->genstat();
+	else
+		FlatMemoryAllocator::getInstance()->genstat();
 	std::cout << "Idle CPU Ticks : " << this->idleticks << std::endl;
 	std::cout << "Active CPU Ticks : " << this->activeticks << std::endl;
 	std::cout << "Total CPU Ticks : " << this->idleticks + this->activeticks << std::endl;
+	std::cout << "Num paged in : " << this->numPagein << std::endl;
+	std::cout << "Num paged out : " << this->numPageout << std::endl;
+	std::cout << "================================\n";
 }
 
 void Scheduler::generateDummy(ConsoleManager* cmInstance)
@@ -576,10 +616,9 @@ Scheduler::Scheduler()
 {
 	//initialize the scheduler
 	prevSummary = "";
-	int idleTicks = 0;
-	int activeTicks = 0;
-	if(configVars["max-overall-mem"] == configVars["mem-per-frame"])
-		isPaging = false;
-	else
-		isPaging = true;
+	idleticks = 0;
+	activeticks = 0;
+	numPagein = 0;
+	numPageout = 0;
+
 }
