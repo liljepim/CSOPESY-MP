@@ -1,4 +1,5 @@
 #include "Scheduler.h"
+#include "FlatMemoryAllocator.h"
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -114,18 +115,31 @@ void Scheduler::readConfig()
 	{
 		spacePos = static_cast<int>(line.find(" "));
 		varName = line.substr(0, spacePos);
+		//std::cout << varName << std::endl;
 		varValue = line.substr(spacePos + 1, line.size());
 		if(varName.compare("scheduler") != 0)
 			this->configVars.insert({varName, std::stoi(varValue)});
 		else
 			this->scheduler = varValue;
 	}
+	this->configVars["max-mem-per-proc"] = 2 << (this->configVars["max-mem-per-proc"] - 1);
+	this->configVars["min-mem-per-proc"] = 2 << (this->configVars["min-mem-per-proc"] - 1);
 	for(int i = 0; i < this->configVars["num-cpu"]; i++)
 		this->coreList.push_back(-1);
 	for (int i = 0; i < this->configVars["num-cpu"]; i++)
 		cpuCores.push_back(std::thread());
 
+	FlatMemoryAllocator::initialize();
 	isOn = true;
+	
+	std::map<String, int>::iterator it;
+
+	for(it = this->configVars.begin(); it != configVars.end(); it++)
+	{
+		std::cout << it->first << " : " << it->second << std::endl;
+	}
+
+	
 }
 
 void Scheduler::registerProcess(std::shared_ptr<Process> newProcess)
@@ -160,13 +174,28 @@ void Scheduler::assignProcesses()
 	{
 		if(this->coreList[i] == -1 && !readyQueue.empty())
 		{
-			this->coreList[i] = this->readyQueue.front()->processId;
-			if(this->scheduler == "\"rr\"")
-				cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
-			else if(this->scheduler == "\"fcfs\"")
-				cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
-			this->readyQueue.erase(this->readyQueue.begin());
-			cpuCores[i].detach();
+			int finalIndex;
+			bool canAllocate = FlatMemoryAllocator::getInstance()->canAllocate(this->readyQueue.front(), &finalIndex);
+			if(canAllocate)
+			{
+				this->coreList[i] = this->readyQueue.front()->processId;
+				FlatMemoryAllocator::getInstance()->allocate(this->readyQueue.front());
+				if(this->scheduler == "\"rr\"")
+					cpuCores[i] = std::thread(&Scheduler::runProcessesRR, sharedInstance, this->readyQueue.front(), i);
+				else if(this->scheduler == "\"fcfs\"")
+					cpuCores[i] = std::thread(&Scheduler::runProcessesFCFS, sharedInstance, this->readyQueue.front(), i);
+				this->readyQueue.erase(this->readyQueue.begin());
+				cpuCores[i].detach();
+			}
+			else
+			{
+				if(this->scheduler == "\"rr\"")
+				{
+					this->readyQueue.push_back(this->readyQueue.front());
+					this->readyQueue.erase(this->readyQueue.begin());
+				}
+				//else swap
+			}
 		}
 	}
 	mtx.unlock();
@@ -185,6 +214,7 @@ void Scheduler::assignProcesses()
 
 void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int coreIndex)
 {
+	runningProcess->isRunning = true;
 	unsigned int previousCycle = cpuCycle;
 	unsigned int endLine;
 	if(runningProcess->totalLine <= runningProcess->currentLine + this->configVars["quantum-cycles"])
@@ -210,11 +240,14 @@ void Scheduler::runProcessesRR(std::shared_ptr<Process> runningProcess, int core
 		this->readyQueue.push_back(runningProcess);
 	else if(runningProcess->currentLine == runningProcess->totalLine)
 		finishedProcesses.push_back(runningProcess);
+	FlatMemoryAllocator::getInstance()->backingStore(runningProcess);
 	mtx.unlock();
+	runningProcess->isRunning = false;
 }
 
 void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int coreIndex)
 {
+	runningProcess->isRunning = true;
 	unsigned int previousCycle = cpuCycle;
 	for(int i = runningProcess->currentLine; i < runningProcess->totalLine;)
 	{
@@ -226,12 +259,12 @@ void Scheduler::runProcessesFCFS(std::shared_ptr<Process> runningProcess, int co
 			runningProcess->lastExecuted = time(NULL);
 			i++;
 		}
-		
 	}
 	mtx.lock();
 	runningProcess->coreUsed = -1;
 	this->coreList[coreIndex] = -1;
 	mtx.unlock();
+	runningProcess->isRunning = false;
 }
 
 int Scheduler::getMax()

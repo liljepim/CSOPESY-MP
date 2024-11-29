@@ -2,6 +2,7 @@
 #include "ConsoleManager.h"
 #include "Scheduler.h"
 #include "InputHandler.h"
+#include "FlatMemoryAllocator.h"
 #include <stdlib.h>
 #include <thread>
 #include <chrono>
@@ -50,4 +51,5 @@ main()
 	ConsoleManager::destroy();
 	Scheduler::destroy();
 	InputHandler::destroy();
+	FlatMemoryAllocator::destroy();
 }

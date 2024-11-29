@@ -1,9 +1,15 @@
 #pragma once
 #include <unordered_map>
+#include <tuple>
 #include <Windows.h>
+#include <algorithm>
 #include "FlatMemoryAllocator.h"
 #include "Typedef.h"
 #include "Scheduler.h"
+#include "ConsoleManager.h"
+#include <fstream>
+
+extern unsigned int cpuCycle;
 
 FlatMemoryAllocator* FlatMemoryAllocator::sharedInstance = nullptr;
 
@@ -25,48 +31,132 @@ void FlatMemoryAllocator::destroy()
 //alloc
 void FlatMemoryAllocator::allocate(std::shared_ptr<Process> newProcess)
 {
+	bool canAllocate;
+	int finalIndex;
+	canAllocate = FlatMemoryAllocator::canAllocate(newProcess, &finalIndex);
+	if(canAllocate)
+	{
+		std::fill(memoryMap.begin() + finalIndex, memoryMap.begin() + finalIndex + newProcess->requiredMem, newProcess);
+		newProcess->memIndex = finalIndex;
+		newProcess->cycleAssigned = cpuCycle;
+		processesStored.push_back(newProcess);
+	}
+}
+
+bool FlatMemoryAllocator::canAllocate(std::shared_ptr<Process> newProcess, int *finalIndexPtr)
+{
 	int emptySpaceCount;
 	bool canAllocate = false;
 	int finalIndex = -1;
-	for(int i = 0; i < Scheduler::getInstance()->configVars["max-overall-mem"] - newProcess->requiredMem + 1; i++)
+	//std::cout << maxOverallMem << std::endl;
+	for(int i = 0; i < maxOverallMem - newProcess->requiredMem + 1; i++)
 	{
 		emptySpaceCount = 0;
 		for(int j = i; j < i + newProcess->requiredMem; j++)
 		{
-			if(memoryMap[j] == -1)
+			if(memoryMap[j] == nullptr)
+			{
 				emptySpaceCount++;
+			}
+			//std::cout << memoryMap[j] << std::endl;
 		}
 		if(emptySpaceCount == newProcess->requiredMem)
 		{
 			canAllocate = true;
 			finalIndex = i;
-			break;
+			*finalIndexPtr = finalIndex;
+			return canAllocate;
 		}
 	}
-	if(canAllocate)
-	{
-		std::fill(memoryMap.begin() + finalIndex, memoryMap.begin() + finalIndex + newProcess->requiredMem, newProcess->processId);
-		newProcess->memIndex = finalIndex;
-	}
+	*finalIndexPtr = finalIndex;
+	return canAllocate;
 }
 
 //dealloc
 void FlatMemoryAllocator::deallocate(std::shared_ptr<Process> newProcess)
 {
-	std::fill(memoryMap.begin() + newProcess->memIndex, memoryMap.begin() + newProcess->memIndex + newProcess->requiredMem, -1);	
+	std::fill(memoryMap.begin() + newProcess->memIndex, memoryMap.begin() + newProcess->memIndex + newProcess->requiredMem, nullptr);	
 	newProcess->memIndex = -1;
+	for(int i = 0; i < processesStored.size(); i++)
+	{
+		if(processesStored[i] == newProcess)
+		{
+			processesStored.erase(processesStored.begin() + i);
+			break;
+		}
+	}
 }
 
-//backing store
+void FlatMemoryAllocator::backingStore(std::shared_ptr<Process> newProcess)
+{
+	deallocate(newProcess);
+	String subfolder = "backing_store";
+	std::ofstream storeFile;
+	storeFile.open(subfolder + '/' + std::to_string(newProcess->processId) + ".txt");
+	storeFile << newProcess->timeCreated << std::endl;
+	storeFile << newProcess->lastExecuted << std::endl;
+	storeFile << newProcess->timeFinished << std::endl;
+	storeFile << newProcess->coreUsed << std::endl;
+	storeFile << newProcess->requiredMem << std::endl;
+	storeFile << newProcess->memIndex << std::endl;
+	storeFile << newProcess->cycleAssigned << std::endl;
+	storeFile << newProcess->isRunning << std::endl;
+	storeFile.close();
+}
 
 //visualization
 // - memory in use count
 // - processes (name and bytes occupied) in memory
 // - fragmentation
+void FlatMemoryAllocator::visualization()
+{
+	String memoryString = "";
+	for(int i = 0; i < memoryMap.size(); i++)
+	{
+		if(memoryMap[i] == nullptr)
+			memoryString += '.';
+		else
+			memoryString += '*';
+	}
+	std::cout << memoryString;
+}
+
+//fcfs swap criteria
+//oldest
+//can fit
+//idle
+//wait otherwise
+void FlatMemoryAllocator::swapBackingStore(std::shared_ptr<Process> newProcess)
+{
+	std::vector<std::shared_ptr<Process>> eligibleProcesses;
+	std::shared_ptr<Process> oldestProcess;
+	for(int i = 0; i < processesStored.size(); i++)
+	{
+		if(!processesStored[i]->isRunning && processesStored[i]->requiredMem >= newProcess->requiredMem)
+			eligibleProcesses.push_back(processesStored[i]);
+	}
+	if(eligibleProcesses.size() > 0)
+	{
+		oldestProcess = eligibleProcesses[0];
+		for(int i = 0; i < eligibleProcesses.size(); i++)
+		{
+			if(eligibleProcesses[i]->cycleAssigned < oldestProcess->cycleAssigned)
+				oldestProcess = eligibleProcesses[i];
+		}
+
+		backingStore(oldestProcess);
+		std::fill(memoryMap.begin() + oldestProcess->memIndex, memoryMap.begin() + oldestProcess->memIndex + newProcess->requiredMem, newProcess);
+		newProcess->memIndex = oldestProcess->memIndex;
+		newProcess->cycleAssigned = cpuCycle;
+	}
+}
 
 FlatMemoryAllocator::FlatMemoryAllocator()
 {
 	int cellCount = Scheduler::getInstance()->configVars["max-overall-mem"];
 	for(int i = 0; i < cellCount; i++)
-		this->memoryMap.push_back(-1);
+		this->memoryMap.push_back(nullptr);
+	maxOverallMem = Scheduler::getInstance()->configVars["max-overall-mem"];
+	availableMem = maxOverallMem;
+	occupiedMem = 0;
 }

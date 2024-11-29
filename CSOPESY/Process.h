@@ -18,6 +18,8 @@ public:
 	int coreUsed;
 	int requiredMem;
 	int memIndex;
+	int cycleAssigned;
+	bool isRunning;
 private:
 	static int totalCount;
 };

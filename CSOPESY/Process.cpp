@@ -8,6 +8,8 @@ Process::Process(String processName)
 {
 	std::random_device rd;
 	std::mt19937 gen(rd());
+	std::random_device rdMem;
+	std::mt19937 genMem(rdMem());
 	std::uniform_int_distribution<> distrib(Scheduler::getInstance()->getMin(), Scheduler::getInstance()->getMax());
 	std::uniform_int_distribution<> distribMem(Scheduler::getInstance()->getMemMin(), Scheduler::getInstance()->getMemMax());
 
@@ -17,8 +19,10 @@ Process::Process(String processName)
 	this->currentLine = 0;
 	this->totalLine = distrib(gen);
 	this->coreUsed = -1;
-	this->requiredMem = distribMem(gen);
+	this->requiredMem = distribMem(genMem);
 	this->memIndex = -1;
+	this->cycleAssigned = -1;
+	this->isRunning = false;
 }
 
 void Process::processBody(){
