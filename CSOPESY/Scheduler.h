@@ -36,6 +36,9 @@ public:
 	void saveSummary();
 	void getCpuUtil();
 	void generateSMI();
+	int powMin;
+	int powMax;
+
 private:
 	void generateDummy(ConsoleManager* cmInstance);
 	static Scheduler* sharedInstance;

@@ -380,7 +380,6 @@ void Scheduler::generateSMI()
 	}
 
 	float cpuUtil = (usedCounter * 100.0f) / totalCount;
-	
 	std::cout << "\n---------------------------------------------------------\n";
 	std::cout << "|	     PROCESS-SMI V1.0.0 Driver Version 01.00        |";
 	std::cout << "\n---------------------------------------------------------\n";
