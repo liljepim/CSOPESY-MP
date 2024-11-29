@@ -1,6 +1,6 @@
 #pragma once
 #include "Typedef.h"
-
+#include <vector>
 
 class Process
 {
