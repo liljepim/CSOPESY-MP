@@ -122,8 +122,6 @@ void Scheduler::readConfig()
 		else
 			this->scheduler = varValue;
 	}
-	this->configVars["max-mem-per-proc"] = 2 << (this->configVars["max-mem-per-proc"] - 1);
-	this->configVars["min-mem-per-proc"] = 2 << (this->configVars["min-mem-per-proc"] - 1);
 	for(int i = 0; i < this->configVars["num-cpu"]; i++)
 		this->coreList.push_back(-1);
 	for (int i = 0; i < this->configVars["num-cpu"]; i++)
