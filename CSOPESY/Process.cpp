@@ -28,10 +28,6 @@ Process::Process(String processName)
 	this->requiredFrames = (requiredMem / memperf) + (requiredMem % memperf != 0);
 }
 
-void Process::processBody(){
-	std::cout<<"Hello, World " << this->currentLine;
-}
-
 Process::~Process()
 {
 	this->totalCount--;

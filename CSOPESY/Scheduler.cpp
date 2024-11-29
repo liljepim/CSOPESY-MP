@@ -137,7 +137,8 @@ void Scheduler::readConfig()
 	{
 		std::cout << it->first << " : " << it->second << std::endl;
 	}
-
+	this->powMin = static_cast<int>(log2(this->configVars["min-mem-per-proc"]));
+	this->powMax = static_cast<int>(log2(this->configVars["max-mem-per-proc"]));
 }
 
 void Scheduler::registerProcess(std::shared_ptr<Process> newProcess)
@@ -297,12 +298,12 @@ int Scheduler::getMin()
 
 int Scheduler::getMemMax()
 {
-	return this->configVars["max-mem-per-proc"];
+	return this->powMax;
 }
 
 int Scheduler::getMemMin()
 {
-	return this->configVars["min-mem-per-proc"];
+	return this->powMin;
 }
 
 void Scheduler::destroy()

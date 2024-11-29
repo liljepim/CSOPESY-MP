@@ -14,7 +14,6 @@ public:
 	time_t timeCreated;
 	time_t lastExecuted;
 	time_t timeFinished;
-	void processBody();
 	int coreUsed;
 	int requiredMem;
 	int memIndex;
