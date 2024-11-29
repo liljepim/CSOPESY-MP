@@ -34,7 +34,10 @@ void PagingAllocator::pageIn(std::shared_ptr<Process> newProcess)
 	if(freeIndices.size() == newProcess->requiredFrames)
 	{
 		for(int i = 0; i < newProcess->requiredFrames; i++)
+		{
 			memoryMap[freeIndices[i]] = newProcess;
+			newProcess->assignedFrames.push_back(freeIndices[i]);
+		}
 	}
 }
 
@@ -56,19 +59,22 @@ std::vector<int> PagingAllocator::canAllocate(std::shared_ptr<Process> newProces
 void PagingAllocator::pageOut(std::shared_ptr<Process> newProcess)
 {
 	int pageOutCount = 0;
+	newProcess->assignedFrames.clear();
 	for(int i = 0 ; i < freeFrames.size(); i++)
 	{
 		if(memoryMap[freeFrames[i]] == newProcess)
 		{
 			memoryMap[freeFrames[i]] = nullptr;
 			freeFrames.push_back(freeFrames[i]);
-			std::erase(freeFrames.begin() + i);
+			freeFrames.erase(freeFrames.begin() + i);
 			pageOutCount += 1;
 		}
 		if(pageOutCount == newProcess->requiredFrames)
 			return;
 	}
 }
+
+
 
 PagingAllocator::PagingAllocator()
 {

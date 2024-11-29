@@ -21,6 +21,7 @@ public:
 	int cycleAssigned;
 	bool isRunning;
 	int requiredFrames;
+	std::vector<int> assignedFrames;
 private:
 	static int totalCount;
 };
